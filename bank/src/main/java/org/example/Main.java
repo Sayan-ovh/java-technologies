@@ -38,6 +38,25 @@ public class Main {
 
         System.out.println("---------------------------------------------------");
 
-
+        // ----------этап 7 - транзакции
+        Transaction tx = new Transaction(
+                TransactionType.DEPOSIT,
+                new AccountNumber("1234567890"),
+                5000,
+                TransactionStatus.SUCCESS
+        );
+        System.out.println(tx);
+        System.out.println(new Transaction(
+                TransactionType.WITHDRAWAL,
+                new AccountNumber("1234567890"),
+                99999,
+                TransactionStatus.REJECTED
+        ));
+        System.out.println(new Transaction(
+                TransactionType.TRANSFER,
+                new AccountNumber("1111111111"),
+                3000,
+                TransactionStatus.SUCCESS
+        ));
     }
 }
