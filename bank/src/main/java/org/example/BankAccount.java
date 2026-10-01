@@ -34,10 +34,21 @@ public abstract class BankAccount {
         increaseBalance(amount);
     }
 
-    public abstract boolean withdraw(double amount);
+    public void withdraw(double amount) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Amount must be positive");
+        }
+        if (amount > getAvailableAmount()) {
+            throw new InsufficientFundsException("Insufficient funds");
+        }
+        decreaseBalance(amount);
+    }
 
-    protected void setBalance(double newBalance) {
-        this.balance = newBalance;
+    // сколько денег можно снять со счета, у каждого типа счета свое правило
+    protected abstract double getAvailableAmount();
+
+    protected void decreaseBalance(double amount) {
+        balance = balance - amount;
     }
 
     private void increaseBalance(double amount) {

@@ -7,7 +7,6 @@ public class DebitAccountTest {
 
     private static final AccountNumber NUMBER = new AccountNumber("1111111111");
 
-
     @Test
     void initialBalanceIsSaved() {
         // Arrange
@@ -52,13 +51,13 @@ public class DebitAccountTest {
         assertEquals(10000.0, account.getBalance());
     }
 
+    // ----------этап 10 - исключения при снятии
     @Test
     void withdrawDecreasesBalance() {
         DebitAccount account = new DebitAccount(NUMBER, "Ivan", 10000);
 
-        boolean result = account.withdraw(8000);
+        account.withdraw(8000);
 
-        assertTrue(result);
         assertEquals(2000.0, account.getBalance());
     }
 
@@ -66,9 +65,10 @@ public class DebitAccountTest {
     void cannotWithdrawMoreThanBalance() {
         DebitAccount account = new DebitAccount(NUMBER, "Ivan", 2000);
 
-        boolean result = account.withdraw(3000);
-
-        assertFalse(result);
+        assertThrows(
+                InsufficientFundsException.class,
+                () -> account.withdraw(3000)
+        );
         assertEquals(2000.0, account.getBalance());
     }
 
@@ -76,9 +76,10 @@ public class DebitAccountTest {
     void cannotWithdrawZero() {
         DebitAccount account = new DebitAccount(NUMBER, "Ivan", 10000);
 
-        boolean result = account.withdraw(0);
-
-        assertFalse(result);
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> account.withdraw(0)
+        );
         assertEquals(10000.0, account.getBalance());
     }
 
@@ -86,9 +87,10 @@ public class DebitAccountTest {
     void cannotWithdrawNegativeAmount() {
         DebitAccount account = new DebitAccount(NUMBER, "Ivan", 10000);
 
-        boolean result = account.withdraw(-100);
-
-        assertFalse(result);
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> account.withdraw(-100)
+        );
         assertEquals(10000.0, account.getBalance());
     }
 }

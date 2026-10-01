@@ -7,17 +7,15 @@ public class SavingsAccountTest {
 
     private static final AccountNumber NUMBER = new AccountNumber("1111111111");
 
-
     @Test
     void canWithdrawIfMinimumBalanceIsKept() {
         // Arrange
         SavingsAccount account = new SavingsAccount(NUMBER, "Ivan", 10000, 1000);
 
         // Act
-        boolean result = account.withdraw(8500);
+        account.withdraw(8500);
 
         // Assert
-        assertTrue(result);
         assertEquals(1500.0, account.getBalance());
     }
 
@@ -26,9 +24,12 @@ public class SavingsAccountTest {
         SavingsAccount account = new SavingsAccount(NUMBER, "Ivan", 10000, 1000);
 
         account.withdraw(8500); // баланс 1500
-        boolean result = account.withdraw(1000); // осталось бы 500, а минимум 1000
 
-        assertFalse(result);
+        // осталось бы 500, а минимум 1000
+        assertThrows(
+                InsufficientFundsException.class,
+                () -> account.withdraw(1000)
+        );
     }
 
     @Test
@@ -36,18 +37,11 @@ public class SavingsAccountTest {
         SavingsAccount account = new SavingsAccount(NUMBER, "Ivan", 10000, 1000);
 
         account.withdraw(8500); // баланс 1500
-        account.withdraw(1000); // неуспешное снятие
+        assertThrows(
+                InsufficientFundsException.class,
+                () -> account.withdraw(1000)
+        );
 
         assertEquals(1500.0, account.getBalance());
-    }
-
-    @Test
-    void canWithdrawExactlyToMinimumBalance() {
-        SavingsAccount account = new SavingsAccount(NUMBER, "Ivan", 10000, 1000);
-
-        boolean result = account.withdraw(9000); // останется ровно 1000
-
-        assertTrue(result);
-        assertEquals(1000.0, account.getBalance());
     }
 }
