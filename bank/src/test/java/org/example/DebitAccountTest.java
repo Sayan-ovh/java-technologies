@@ -29,21 +29,26 @@ public class DebitAccountTest {
         assertEquals(10500.0, account.getBalance());
     }
 
+    // ----------этап 8 - исключения при пополнении
     @Test
-    void zeroDepositDoesNotChangeBalance() {
+    void zeroDepositThrowsException() {
         DebitAccount account = new DebitAccount(NUMBER, "Ivan", 10000);
 
-        account.deposit(0);
-
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> account.deposit(0)
+        );
         assertEquals(10000.0, account.getBalance());
     }
 
     @Test
-    void negativeDepositDoesNotChangeBalance() {
+    void negativeDepositThrowsException() {
         DebitAccount account = new DebitAccount(NUMBER, "Ivan", 10000);
 
-        account.deposit(-500);
-
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> account.deposit(-100)
+        );
         assertEquals(10000.0, account.getBalance());
     }
 
