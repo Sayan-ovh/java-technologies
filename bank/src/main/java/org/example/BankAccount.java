@@ -28,15 +28,20 @@ public abstract class BankAccount {
     }
 
     public void deposit(double amount) {
-        if (amount > 0) {
-            balance = balance + amount;
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Amount must be positive");
         }
+        increaseBalance(amount);
     }
 
     public abstract boolean withdraw(double amount);
 
     protected void setBalance(double newBalance) {
         this.balance = newBalance;
+    }
+
+    private void increaseBalance(double amount) {
+        balance = balance + amount;
     }
 
     // счета равны, если у них одинаковый номер (баланс и тип счета не важны)
