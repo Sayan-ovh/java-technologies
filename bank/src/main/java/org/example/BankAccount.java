@@ -39,6 +39,24 @@ public abstract class BankAccount {
         this.balance = newBalance;
     }
 
+    // счета равны, если у них одинаковый номер (баланс и тип счета не важны)
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof BankAccount)) {
+            return false;
+        }
+        BankAccount other = (BankAccount) o;
+        return number.equals(other.number);
+    }
+
+    @Override
+    public int hashCode() {
+        return number.hashCode();
+    }
+
     @Override
     public String toString() {
         return getClass().getSimpleName()
