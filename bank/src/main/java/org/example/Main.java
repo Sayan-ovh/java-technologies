@@ -3,9 +3,13 @@ package org.example;
 public class Main {
     public static void main(String[] args) {
         CreditAccount c = new CreditAccount(new AccountNumber("0000000002"), "Vanya", 1000, 5000);
-        System.out.println(c.withdraw(4000));
+        c.withdraw(4000);
         System.out.println(c.getBalance());
-        System.out.println(c.withdraw(3000));
+        try {
+            c.withdraw(3000);
+        } catch (InsufficientFundsException e) {
+            System.out.println(e.getMessage());
+        }
         System.out.println(c.getBalance());
 
         System.out.println("---------------------------------------------------");

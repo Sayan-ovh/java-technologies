@@ -7,14 +7,12 @@ public class CreditAccountTest {
 
     private static final AccountNumber NUMBER = new AccountNumber("1111111111");
 
-
     @Test
     void canGoNegativeWithinLimit() {
         CreditAccount a = new CreditAccount(NUMBER, "Ivan", 1000, 5000);
 
-        boolean result = a.withdraw(4000);
+        a.withdraw(4000);
 
-        assertTrue(result);
         assertEquals(-3000, a.getBalance());
     }
 
@@ -23,9 +21,24 @@ public class CreditAccountTest {
         CreditAccount a = new CreditAccount(NUMBER, "Ivan", 1000, 5000);
 
         a.withdraw(4000); // баланс -3000
-        boolean result = a.withdraw(3000); // хотел бы -6000, но лимит -5000
 
-        assertFalse(result);
+        // хотел бы -6000, но лимит -5000
+        assertThrows(
+                InsufficientFundsException.class,
+                () -> a.withdraw(3000)
+        );
+    }
+
+    @Test
+    void balanceDoesNotChangeAfterFailedWithdraw() {
+        CreditAccount a = new CreditAccount(NUMBER, "Ivan", 1000, 5000);
+
+        a.withdraw(4000); // баланс -3000
+        assertThrows(
+                InsufficientFundsException.class,
+                () -> a.withdraw(3000)
+        );
+
         assertEquals(-3000, a.getBalance());
     }
 
@@ -33,9 +46,8 @@ public class CreditAccountTest {
     void canWithdrawExactlyToLimit() {
         CreditAccount a = new CreditAccount(NUMBER, "Ivan", 1000, 5000);
 
-        boolean result = a.withdraw(6000); // 1000 - 6000 = -5000, ровно лимит
+        a.withdraw(6000); // 1000 - 6000 = -5000, ровно лимит
 
-        assertTrue(result);
         assertEquals(-5000, a.getBalance());
     }
 
@@ -53,9 +65,10 @@ public class CreditAccountTest {
     void cannotWithdrawZero() {
         CreditAccount a = new CreditAccount(NUMBER, "Ivan", 1000, 5000);
 
-        boolean result = a.withdraw(0);
-
-        assertFalse(result);
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> a.withdraw(0)
+        );
         assertEquals(1000, a.getBalance());
     }
 }
