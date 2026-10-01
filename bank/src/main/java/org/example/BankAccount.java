@@ -1,11 +1,11 @@
 package org.example;
 
 public abstract class BankAccount {
-    private final String number;
+    private final AccountNumber number;
     private final String owner;
     private double balance;
 
-    protected BankAccount(String number, String owner, double initialBalance) {
+    protected BankAccount(AccountNumber number, String owner, double initialBalance) {
         this.number = number;
         this.owner = owner;
         if (initialBalance < 0) {
@@ -15,7 +15,7 @@ public abstract class BankAccount {
         }
     }
 
-    public String getNumber() {
+    public AccountNumber getNumber() {
         return number;
     }
 
@@ -60,7 +60,7 @@ public abstract class BankAccount {
     @Override
     public String toString() {
         return getClass().getSimpleName()
-                + "{number='" + number
+                + "{number='" + number.value()
                 + "', owner='" + owner
                 + "', balance=" + balance + "}";
     }
