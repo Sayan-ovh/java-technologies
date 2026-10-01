@@ -98,6 +98,81 @@ public class TransferServiceTest {
         assertEquals(5000.0, to.getBalance());
     }
 
+    // ----------этап 12 - тесты на исключения
+    @Test
+    void negativeTransferThrowsException() {
+        DebitAccount from = new DebitAccount(NUMBER_A, "Ivan", 10000);
+        DebitAccount to = new DebitAccount(NUMBER_B, "Petr", 2000);
+        TransferService service = new TransferService(new NoCommission(), new FakeNotificationService());
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> service.transfer(from, to, -500)
+        );
+    }
+
+    @Test
+    void zeroTransferThrowsException() {
+        DebitAccount from = new DebitAccount(NUMBER_A, "Ivan", 10000);
+        DebitAccount to = new DebitAccount(NUMBER_B, "Petr", 2000);
+        TransferService service = new TransferService(new NoCommission(), new FakeNotificationService());
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> service.transfer(from, to, 0)
+        );
+    }
+
+    @Test
+    void transferToSameAccountThrowsException() {
+        DebitAccount account = new DebitAccount(NUMBER_A, "Ivan", 10000);
+        TransferService service = new TransferService(new NoCommission(), new FakeNotificationService());
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> service.transfer(account, account, 3000)
+        );
+    }
+
+    @Test
+    void transferWithoutEnoughMoneyThrowsException() {
+        DebitAccount from = new DebitAccount(NUMBER_A, "Ivan", 1000);
+        DebitAccount to = new DebitAccount(NUMBER_B, "Petr", 2000);
+        TransferService service = new TransferService(new NoCommission(), new FakeNotificationService());
+
+        InsufficientFundsException ex = assertThrows(
+                InsufficientFundsException.class,
+                () -> service.transfer(from, to, 5000)
+        );
+
+        assertEquals("Insufficient funds", ex.getMessage());
+    }
+
+    @Test
+    void transferWithoutMoneyForCommissionThrowsException() {
+        // денег хватает на 10000, но не хватает на 10000 + 100
+        DebitAccount from = new DebitAccount(NUMBER_A, "Ivan", 10000);
+        DebitAccount to = new DebitAccount(NUMBER_B, "Petr", 2000);
+        TransferService service = new TransferService(new PercentCommission(1), new FakeNotificationService());
+
+        assertThrows(
+                InsufficientFundsException.class,
+                () -> service.transfer(from, to, 10000)
+        );
+    }
+
+    @Test
+    void transferOverLimitThrowsException() {
+        DebitAccount from = new DebitAccount(NUMBER_A, "Ivan", 100000);
+        DebitAccount to = new DebitAccount(NUMBER_B, "Petr", 2000);
+        TransferService service = new TransferService(new NoCommission(), new FakeNotificationService());
+
+        assertThrows(
+                TransferLimitExceededException.class,
+                () -> service.transfer(from, to, 50001)
+        );
+    }
+
     // ----------этап 9 - уведомления
     @Test
     void successfulTransferSendsExactlyOneNotification() {
