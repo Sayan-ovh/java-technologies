@@ -173,6 +173,22 @@ public class TransferServiceTest {
         );
     }
 
+    // ----------этап 13 - состояние после ошибки
+    @Test
+    void failedTransferDoesNotChangeBalances() {
+        DebitAccount from = new DebitAccount(NUMBER_A, "Ivan", 1000);
+        DebitAccount to = new DebitAccount(NUMBER_B, "Petr", 2000);
+        TransferService service = new TransferService(new NoCommission(), new FakeNotificationService());
+
+        assertThrows(
+                InsufficientFundsException.class,
+                () -> service.transfer(from, to, 5000)
+        );
+
+        assertEquals(1000.0, from.getBalance());
+        assertEquals(2000.0, to.getBalance());
+    }
+
     // ----------этап 9 - уведомления
     @Test
     void successfulTransferSendsExactlyOneNotification() {
