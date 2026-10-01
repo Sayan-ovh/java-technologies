@@ -38,4 +38,12 @@ public abstract class BankAccount {
     protected void setBalance(double newBalance) {
         this.balance = newBalance;
     }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName()
+                + "{number='" + number
+                + "', owner='" + owner
+                + "', balance=" + balance + "}";
+    }
 }
