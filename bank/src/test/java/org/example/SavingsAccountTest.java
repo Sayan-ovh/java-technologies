@@ -5,10 +5,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class SavingsAccountTest {
 
+    private static final AccountNumber NUMBER = new AccountNumber("1111111111");
+
+
     @Test
     void canWithdrawIfMinimumBalanceIsKept() {
         // Arrange
-        SavingsAccount account = new SavingsAccount("1", "Ivan", 10000, 1000);
+        SavingsAccount account = new SavingsAccount(NUMBER, "Ivan", 10000, 1000);
 
         // Act
         boolean result = account.withdraw(8500);
@@ -20,7 +23,7 @@ public class SavingsAccountTest {
 
     @Test
     void cannotGoBelowMinimumBalance() {
-        SavingsAccount account = new SavingsAccount("1", "Ivan", 10000, 1000);
+        SavingsAccount account = new SavingsAccount(NUMBER, "Ivan", 10000, 1000);
 
         account.withdraw(8500); // баланс 1500
         boolean result = account.withdraw(1000); // осталось бы 500, а минимум 1000
@@ -30,7 +33,7 @@ public class SavingsAccountTest {
 
     @Test
     void balanceDoesNotChangeAfterFailedWithdraw() {
-        SavingsAccount account = new SavingsAccount("1", "Ivan", 10000, 1000);
+        SavingsAccount account = new SavingsAccount(NUMBER, "Ivan", 10000, 1000);
 
         account.withdraw(8500); // баланс 1500
         account.withdraw(1000); // неуспешное снятие
@@ -40,7 +43,7 @@ public class SavingsAccountTest {
 
     @Test
     void canWithdrawExactlyToMinimumBalance() {
-        SavingsAccount account = new SavingsAccount("1", "Ivan", 10000, 1000);
+        SavingsAccount account = new SavingsAccount(NUMBER, "Ivan", 10000, 1000);
 
         boolean result = account.withdraw(9000); // останется ровно 1000
 

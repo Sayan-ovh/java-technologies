@@ -5,9 +5,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class CreditAccountTest {
 
+    private static final AccountNumber NUMBER = new AccountNumber("1111111111");
+
+
     @Test
     void canGoNegativeWithinLimit() {
-        CreditAccount a = new CreditAccount("1", "Ivan", 1000, 5000);
+        CreditAccount a = new CreditAccount(NUMBER, "Ivan", 1000, 5000);
 
         boolean result = a.withdraw(4000);
 
@@ -17,7 +20,7 @@ public class CreditAccountTest {
 
     @Test
     void cannotGoBelowLimit() {
-        CreditAccount a = new CreditAccount("1", "Ivan", 1000, 5000);
+        CreditAccount a = new CreditAccount(NUMBER, "Ivan", 1000, 5000);
 
         a.withdraw(4000); // баланс -3000
         boolean result = a.withdraw(3000); // хотел бы -6000, но лимит -5000
@@ -28,7 +31,7 @@ public class CreditAccountTest {
 
     @Test
     void canWithdrawExactlyToLimit() {
-        CreditAccount a = new CreditAccount("1", "Ivan", 1000, 5000);
+        CreditAccount a = new CreditAccount(NUMBER, "Ivan", 1000, 5000);
 
         boolean result = a.withdraw(6000); // 1000 - 6000 = -5000, ровно лимит
 
@@ -38,7 +41,7 @@ public class CreditAccountTest {
 
     @Test
     void depositDecreasesDebt() {
-        CreditAccount a = new CreditAccount("1", "Ivan", 0, 5000);
+        CreditAccount a = new CreditAccount(NUMBER, "Ivan", 0, 5000);
 
         a.withdraw(3000); // -3000
         a.deposit(1000);  // -2000
@@ -48,7 +51,7 @@ public class CreditAccountTest {
 
     @Test
     void cannotWithdrawZero() {
-        CreditAccount a = new CreditAccount("1", "Ivan", 1000, 5000);
+        CreditAccount a = new CreditAccount(NUMBER, "Ivan", 1000, 5000);
 
         boolean result = a.withdraw(0);
 
