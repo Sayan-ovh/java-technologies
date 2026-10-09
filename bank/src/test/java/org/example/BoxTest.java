@@ -6,26 +6,25 @@ import static org.junit.jupiter.api.Assertions.*;
 public class BoxTest {
 
     @Test
-    void stringCanBeReadAsString() {
-        Box box = new Box();
-        box.set("Java");
+    void stringBoxReturnsSavedString() {
+        // Arrange
+        Box<String> text = new Box<>();
 
-        String value = (String) box.get();
+        // Act
+        text.set("Java");
+        String s = text.get();
 
-        assertEquals("Java", value);
+        // Assert
+        assertEquals("Java", s);
     }
 
     @Test
-    void numberReadAsStringThrowsClassCastException() {
-        Box box = new Box();
-        box.set(123);
+    void integerBoxReturnsSavedNumber() {
+        Box<Integer> number = new Box<>();
 
-        // код компилируется, но падает только во время выполнения
-        assertThrows(
-                ClassCastException.class,
-                () -> {
-                    String value = (String) box.get();
-                }
-        );
+        number.set(42);
+        Integer n = number.get();
+
+        assertEquals(42, n);
     }
 }
