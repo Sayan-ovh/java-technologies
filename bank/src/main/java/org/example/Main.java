@@ -23,16 +23,19 @@ public class Main {
 
         // ----------этап 7 - транзакции
         Transaction tx1 = new Transaction(
+                1L,
                 TransactionType.DEPOSIT,
                 new AccountNumber("1234567890"),
                 5000,
                 TransactionStatus.SUCCESS);
         Transaction tx2 = new Transaction(
+                2L,
                 TransactionType.WITHDRAWAL,
                 new AccountNumber("1234567890"),
                 99999,
                 TransactionStatus.REJECTED);
         Transaction tx3 = new Transaction(
+                3L,
                 TransactionType.TRANSFER,
                 new AccountNumber("1111111111"),
                 3000,
