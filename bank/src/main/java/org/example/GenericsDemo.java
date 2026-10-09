@@ -37,5 +37,42 @@ public class GenericsDemo {
         System.out.println(GenericUtils.contains(numbers, 10));
 
         System.out.println("---------------------------------------------------");
+
+        // ----------этап 1-3 - Identifiable, Repository, InMemoryRepository
+        Repository<AccountNumber, BankAccount> accounts = new InMemoryRepository<>();
+        accounts.save(new DebitAccount(accountNumber, "Ivan", 10000));
+        accounts.save(new SavingsAccount(new AccountNumber("2222222222"), "Petr", 5000, 1000));
+        System.out.println(accounts.size());
+        System.out.println(accounts.findById(accountNumber));
+
+        // счет с таким же номером заменяет старый, дубликата нет
+        accounts.save(new DebitAccount(accountNumber, "Ivan", 99999));
+        System.out.println(accounts.size());
+        System.out.println(accounts.findById(accountNumber));
+
+        AccountNumber unknown = new AccountNumber("9999999999");
+        System.out.println(accounts.existsById(unknown));
+        try {
+            accounts.findById(unknown);
+        } catch (EntityNotFoundException e) {
+            System.out.println("Not found: " + e.getMessage());
+        }
+
+        Repository<Long, Transaction> transactions = new InMemoryRepository<>();
+        transactions.save(new Transaction(1L, TransactionType.DEPOSIT, accountNumber, 5000, TransactionStatus.SUCCESS));
+        System.out.println(transactions.size());
+        System.out.println(transactions.findById(1L));
+
+        System.out.println("---------------------------------------------------");
+
+        // ----------инвариантность
+        List<DebitAccount> debitAccounts = new ArrayList<>();
+        // List<BankAccount> bankAccounts = debitAccounts; // ошибка компиляции
+
+        debitAccounts.add(new DebitAccount(new AccountNumber("3333333333"), "Anna", 1000));
+        debitAccounts.add(new DebitAccount(new AccountNumber("4444444444"), "Oleg", 3000));
+        debitAccounts.add(new DebitAccount(new AccountNumber("5555555555"), "Igor", 3000));
+
+        System.out.println("---------------------------------------------------");
     }
 }
