@@ -12,4 +12,10 @@ public final class AccountUtils {
         }
         return total;
     }
+
+    // в список только кладем, значит super (Consumer Super)
+    public static void addDemoDebitAccounts(List<? super DebitAccount> target) {
+        target.add(new DebitAccount(new AccountNumber("1000000001"), "Demo1", 1000));
+        target.add(new DebitAccount(new AccountNumber("1000000002"), "Demo2", 2000));
+    }
 }

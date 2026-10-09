@@ -82,5 +82,12 @@ public class GenericsDemo {
         System.out.println(AccountUtils.totalBalance(savingsAccounts));
 
         System.out.println("---------------------------------------------------");
+
+        // ----------этап 5 - super (consumer)
+        List<BankAccount> allAccounts = new ArrayList<>();
+        AccountUtils.addDemoDebitAccounts(allAccounts);
+        System.out.println(allAccounts.size());
+
+        System.out.println("---------------------------------------------------");
     }
 }
