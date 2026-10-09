@@ -74,5 +74,13 @@ public class GenericsDemo {
         debitAccounts.add(new DebitAccount(new AccountNumber("5555555555"), "Igor", 3000));
 
         System.out.println("---------------------------------------------------");
+
+        // ----------этап 4 - extends (producer)
+        List<SavingsAccount> savingsAccounts = new ArrayList<>();
+        savingsAccounts.add(new SavingsAccount(new AccountNumber("6666666666"), "Vera", 5000, 500));
+        System.out.println(AccountUtils.totalBalance(debitAccounts));
+        System.out.println(AccountUtils.totalBalance(savingsAccounts));
+
+        System.out.println("---------------------------------------------------");
     }
 }
