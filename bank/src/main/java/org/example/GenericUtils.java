@@ -1,5 +1,6 @@
 package org.example;
 
+import java.util.List;
 import java.util.Objects;
 
 public final class GenericUtils {
@@ -30,5 +31,12 @@ public final class GenericUtils {
             }
         }
         return false;
+    }
+
+    // source отдает нам значения (extends), target принимает их (super)
+    public static <T> void copy(List<? extends T> source, List<? super T> target) {
+        for (T item : source) {
+            target.add(item);
+        }
     }
 }

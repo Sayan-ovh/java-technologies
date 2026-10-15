@@ -89,5 +89,12 @@ public class GenericsDemo {
         System.out.println(allAccounts.size());
 
         System.out.println("---------------------------------------------------");
+
+        // ----------этап 6 - copy
+        List<BankAccount> target = new ArrayList<>();
+        GenericUtils.copy(debitAccounts, target);
+        System.out.println(target.size());
+
+        System.out.println("---------------------------------------------------");
     }
 }
