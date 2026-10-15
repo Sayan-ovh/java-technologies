@@ -96,5 +96,11 @@ public class GenericsDemo {
         System.out.println(target.size());
 
         System.out.println("---------------------------------------------------");
+
+        // ----------этап 7 - richest
+        DebitAccount richest = AccountUtils.richest(debitAccounts);
+        System.out.println(richest);
+
+        System.out.println("---------------------------------------------------");
     }
 }

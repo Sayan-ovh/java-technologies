@@ -18,4 +18,18 @@ public final class AccountUtils {
         target.add(new DebitAccount(new AccountNumber("1000000001"), "Demo1", 1000));
         target.add(new DebitAccount(new AccountNumber("1000000002"), "Demo2", 2000));
     }
+
+    // T связывает тип списка и тип результата: из List<DebitAccount> вернется DebitAccount
+    public static <T extends BankAccount> T richest(List<T> accounts) {
+        if (accounts == null || accounts.isEmpty()) {
+            throw new IllegalArgumentException("Account list is empty");
+        }
+        T best = accounts.get(0);
+        for (T account : accounts) {
+            if (account.getBalance() > best.getBalance()) {
+                best = account;
+            }
+        }
+        return best;
+    }
 }
