@@ -102,5 +102,12 @@ public class GenericsDemo {
         System.out.println(richest);
 
         System.out.println("---------------------------------------------------");
+
+        // ----------этап 8 - type erasure
+        List<String> strings = new ArrayList<>();
+        List<Integer> integers = new ArrayList<>();
+        System.out.println(strings.getClass());
+        System.out.println(integers.getClass());
+        System.out.println(strings.getClass() == integers.getClass());
     }
 }
