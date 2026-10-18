@@ -52,11 +52,8 @@ public class GenericsDemo {
 
         AccountNumber unknown = new AccountNumber("9999999999");
         System.out.println(accounts.existsById(unknown));
-        try {
-            accounts.findById(unknown);
-        } catch (EntityNotFoundException e) {
-            System.out.println("Not found: " + e.getMessage());
-        }
+        // такого счета нет, поэтому findById вернет null
+        System.out.println(accounts.findById(unknown));
 
         Repository<Long, Transaction> transactions = new InMemoryRepository<>();
         transactions.save(new Transaction(1L, TransactionType.DEPOSIT, accountNumber, 5000, TransactionStatus.SUCCESS));

@@ -1,44 +1,41 @@
 package org.example;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class InMemoryRepository<ID, T extends Identifiable<ID>> implements Repository<ID, T> {
-    private final List<T> values = new ArrayList<>();
+    // id это ключ, поэтому ищем сразу по ключу, а не перебором списка
+    private final Map<ID, T> values = new HashMap<>();
 
     @Override
     public void save(T value) {
         if (value == null) {
             throw new IllegalArgumentException("Value must not be null");
         }
-        for (int i = 0; i < values.size(); i++) {
-            if (values.get(i).getId().equals(value.getId())) {
-                // такой id уже есть, заменяем старый объект новым
-                values.set(i, value);
-                return;
-            }
-        }
-        values.add(value);
+        // если такой id уже есть, put заменит старый объект новым
+        values.put(value.getId(), value);
     }
 
     @Override
     public T findById(ID id) {
-        for (T value : values) {
-            if (value.getId().equals(id)) {
-                return value;
-            }
-        }
-        throw new EntityNotFoundException("Entity not found: " + id);
+        return values.get(id);
     }
 
     @Override
     public boolean existsById(ID id) {
-        for (T value : values) {
-            if (value.getId().equals(id)) {
-                return true;
-            }
-        }
-        return false;
+        return values.containsKey(id);
+    }
+
+    @Override
+    public boolean deleteById(ID id) {
+        return values.remove(id) != null;
+    }
+
+    @Override
+    public List<T> findAll() {
+        return new ArrayList<>(values.values());
     }
 
     @Override

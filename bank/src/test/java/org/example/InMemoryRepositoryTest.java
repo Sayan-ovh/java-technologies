@@ -1,6 +1,9 @@
 package org.example;
 
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class InMemoryRepositoryTest {
@@ -59,13 +62,10 @@ public class InMemoryRepositoryTest {
     }
 
     @Test
-    void findByIdThrowsExceptionIfNotFound() {
+    void findByIdReturnsNullIfNotFound() {
         Repository<AccountNumber, BankAccount> accounts = new InMemoryRepository<>();
 
-        assertThrows(
-                EntityNotFoundException.class,
-                () -> accounts.findById(NUMBER_A)
-        );
+        assertNull(accounts.findById(NUMBER_A));
     }
 
     @Test
@@ -91,5 +91,58 @@ public class InMemoryRepositoryTest {
         transactions.save(transaction);
 
         assertEquals(transaction, transactions.findById(1L));
+    }
+
+    // ----------этап 1 - map вместо списка
+    @Test
+    void sizeGrowsAfterSavingNewId() {
+        Repository<AccountNumber, BankAccount> accounts = new InMemoryRepository<>();
+
+        accounts.save(new DebitAccount(NUMBER_A, "Ivan", 1000));
+        assertEquals(1, accounts.size());
+
+        accounts.save(new DebitAccount(NUMBER_B, "Petr", 2000));
+        assertEquals(2, accounts.size());
+    }
+
+    @Test
+    void savingSameIdReplacesOldValue() {
+        Repository<AccountNumber, BankAccount> repository = new InMemoryRepository<>();
+        AccountNumber id = new AccountNumber("0000000001");
+        BankAccount oldAccount = new DebitAccount(id, "Ivan", 1000);
+        BankAccount newAccount = new DebitAccount(id, "Petr", 5000);
+
+        repository.save(oldAccount);
+        repository.save(newAccount);
+
+        assertEquals(1, repository.size());
+        assertSame(newAccount, repository.findById(id));
+    }
+
+    @Test
+    void deleteByIdRemovesExistingAccount() {
+        Repository<AccountNumber, BankAccount> accounts = new InMemoryRepository<>();
+        accounts.save(new DebitAccount(NUMBER_A, "Ivan", 1000));
+
+        boolean deleted = accounts.deleteById(NUMBER_A);
+
+        assertTrue(deleted);
+        assertFalse(accounts.existsById(NUMBER_A));
+        assertEquals(0, accounts.size());
+    }
+
+    @Test
+    void findAllReturnsAllSavedAccounts() {
+        Repository<AccountNumber, BankAccount> accounts = new InMemoryRepository<>();
+        BankAccount first = new DebitAccount(NUMBER_A, "Ivan", 1000);
+        BankAccount second = new SavingsAccount(NUMBER_B, "Petr", 5000, 500);
+        accounts.save(first);
+        accounts.save(second);
+
+        List<BankAccount> all = accounts.findAll();
+
+        assertEquals(2, all.size());
+        assertTrue(all.contains(first));
+        assertTrue(all.contains(second));
     }
 }
