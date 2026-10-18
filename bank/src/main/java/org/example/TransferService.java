@@ -6,13 +6,16 @@ public class TransferService {
     private final CommissionPolicy commissionPolicy;
     private final NotificationService notificationService;
     private final BlockedAccountRegistry blockedAccounts;
+    private final TransactionJournal journal;
 
     public TransferService(CommissionPolicy commissionPolicy,
                            NotificationService notificationService,
-                           BlockedAccountRegistry blockedAccounts) {
+                           BlockedAccountRegistry blockedAccounts,
+                           TransactionJournal journal) {
         this.commissionPolicy = commissionPolicy;
         this.notificationService = notificationService;
         this.blockedAccounts = blockedAccounts;
+        this.journal = journal;
     }
 
     public void transfer(BankAccount from, BankAccount to, double amount) {
@@ -35,6 +38,16 @@ public class TransferService {
         // если денег не хватит, withdraw бросит исключение, и до deposit дело не дойдет
         from.withdraw(total);
         to.deposit(amount);
+
+        // после успешного перевода пишем запись в журнал
+        long id = journal.size() + 1;
+        journal.add(new Transaction(
+                id,
+                TransactionType.TRANSFER,
+                from.getNumber(),
+                amount,
+                TransactionStatus.SUCCESS
+        ));
 
         notificationService.notify("Transfer " + amount + " completed");
     }
