@@ -14,7 +14,7 @@ public class TransferServiceTest {
         // Arrange
         DebitAccount from = new DebitAccount(NUMBER_A, "Ivan", 10000);
         DebitAccount to = new DebitAccount(NUMBER_B, "Petr", 2000);
-        TransferService service = new TransferService(new NoCommission(), new FakeNotificationService());
+        TransferService service = new TransferService(new NoCommission(), new FakeNotificationService(), new BlockedAccountRegistry());
 
         // Act
         service.transfer(from, to, 3000);
@@ -29,7 +29,7 @@ public class TransferServiceTest {
     void commissionIsChargedFromSender() {
         DebitAccount from = new DebitAccount(NUMBER_A, "Ivan", 20000);
         DebitAccount to = new DebitAccount(NUMBER_B, "Petr", 0);
-        TransferService service = new TransferService(new PercentCommission(1), new FakeNotificationService());
+        TransferService service = new TransferService(new PercentCommission(1), new FakeNotificationService(), new BlockedAccountRegistry());
 
         service.transfer(from, to, 10000);
 
@@ -41,7 +41,7 @@ public class TransferServiceTest {
     void receiverGetsExactlyTransferAmount() {
         DebitAccount from = new DebitAccount(NUMBER_A, "Ivan", 20000);
         DebitAccount to = new DebitAccount(NUMBER_B, "Petr", 2000);
-        TransferService service = new TransferService(new PercentCommission(1), new FakeNotificationService());
+        TransferService service = new TransferService(new PercentCommission(1), new FakeNotificationService(), new BlockedAccountRegistry());
 
         service.transfer(from, to, 10000);
 
@@ -54,7 +54,7 @@ public class TransferServiceTest {
     void transferFromDebitToDebit() {
         DebitAccount from = new DebitAccount(NUMBER_A, "Ivan", 5000);
         DebitAccount to = new DebitAccount(NUMBER_B, "Petr", 1000);
-        TransferService service = new TransferService(new NoCommission(), new FakeNotificationService());
+        TransferService service = new TransferService(new NoCommission(), new FakeNotificationService(), new BlockedAccountRegistry());
 
         service.transfer(from, to, 2000);
 
@@ -66,7 +66,7 @@ public class TransferServiceTest {
     void transferFromDebitToSavings() {
         DebitAccount from = new DebitAccount(NUMBER_A, "Ivan", 5000);
         SavingsAccount to = new SavingsAccount(NUMBER_B, "Petr", 2000, 500);
-        TransferService service = new TransferService(new NoCommission(), new FakeNotificationService());
+        TransferService service = new TransferService(new NoCommission(), new FakeNotificationService(), new BlockedAccountRegistry());
 
         service.transfer(from, to, 1000);
 
@@ -78,7 +78,7 @@ public class TransferServiceTest {
     void transferFromCreditToDebit() {
         CreditAccount from = new CreditAccount(NUMBER_A, "Ivan", 1000, 5000);
         DebitAccount to = new DebitAccount(NUMBER_B, "Petr", 2000);
-        TransferService service = new TransferService(new NoCommission(), new FakeNotificationService());
+        TransferService service = new TransferService(new NoCommission(), new FakeNotificationService(), new BlockedAccountRegistry());
 
         service.transfer(from, to, 3000);
 
@@ -90,7 +90,7 @@ public class TransferServiceTest {
     void transferFromSavingsToDebit() {
         SavingsAccount from = new SavingsAccount(NUMBER_A, "Ivan", 5000, 1000);
         DebitAccount to = new DebitAccount(NUMBER_B, "Petr", 2000);
-        TransferService service = new TransferService(new NoCommission(), new FakeNotificationService());
+        TransferService service = new TransferService(new NoCommission(), new FakeNotificationService(), new BlockedAccountRegistry());
 
         service.transfer(from, to, 3000);
 
@@ -103,7 +103,7 @@ public class TransferServiceTest {
     void negativeTransferThrowsException() {
         DebitAccount from = new DebitAccount(NUMBER_A, "Ivan", 10000);
         DebitAccount to = new DebitAccount(NUMBER_B, "Petr", 2000);
-        TransferService service = new TransferService(new NoCommission(), new FakeNotificationService());
+        TransferService service = new TransferService(new NoCommission(), new FakeNotificationService(), new BlockedAccountRegistry());
 
         assertThrows(
                 IllegalArgumentException.class,
@@ -115,7 +115,7 @@ public class TransferServiceTest {
     void zeroTransferThrowsException() {
         DebitAccount from = new DebitAccount(NUMBER_A, "Ivan", 10000);
         DebitAccount to = new DebitAccount(NUMBER_B, "Petr", 2000);
-        TransferService service = new TransferService(new NoCommission(), new FakeNotificationService());
+        TransferService service = new TransferService(new NoCommission(), new FakeNotificationService(), new BlockedAccountRegistry());
 
         assertThrows(
                 IllegalArgumentException.class,
@@ -126,7 +126,7 @@ public class TransferServiceTest {
     @Test
     void transferToSameAccountThrowsException() {
         DebitAccount account = new DebitAccount(NUMBER_A, "Ivan", 10000);
-        TransferService service = new TransferService(new NoCommission(), new FakeNotificationService());
+        TransferService service = new TransferService(new NoCommission(), new FakeNotificationService(), new BlockedAccountRegistry());
 
         assertThrows(
                 IllegalArgumentException.class,
@@ -138,7 +138,7 @@ public class TransferServiceTest {
     void transferWithoutEnoughMoneyThrowsException() {
         DebitAccount from = new DebitAccount(NUMBER_A, "Ivan", 1000);
         DebitAccount to = new DebitAccount(NUMBER_B, "Petr", 2000);
-        TransferService service = new TransferService(new NoCommission(), new FakeNotificationService());
+        TransferService service = new TransferService(new NoCommission(), new FakeNotificationService(), new BlockedAccountRegistry());
 
         InsufficientFundsException ex = assertThrows(
                 InsufficientFundsException.class,
@@ -153,7 +153,7 @@ public class TransferServiceTest {
         // денег хватает на 10000, но не хватает на 10000 + 100
         DebitAccount from = new DebitAccount(NUMBER_A, "Ivan", 10000);
         DebitAccount to = new DebitAccount(NUMBER_B, "Petr", 2000);
-        TransferService service = new TransferService(new PercentCommission(1), new FakeNotificationService());
+        TransferService service = new TransferService(new PercentCommission(1), new FakeNotificationService(), new BlockedAccountRegistry());
 
         assertThrows(
                 InsufficientFundsException.class,
@@ -165,7 +165,7 @@ public class TransferServiceTest {
     void transferOverLimitThrowsException() {
         DebitAccount from = new DebitAccount(NUMBER_A, "Ivan", 100000);
         DebitAccount to = new DebitAccount(NUMBER_B, "Petr", 2000);
-        TransferService service = new TransferService(new NoCommission(), new FakeNotificationService());
+        TransferService service = new TransferService(new NoCommission(), new FakeNotificationService(), new BlockedAccountRegistry());
 
         assertThrows(
                 TransferLimitExceededException.class,
@@ -178,7 +178,7 @@ public class TransferServiceTest {
     void failedTransferDoesNotChangeBalances() {
         DebitAccount from = new DebitAccount(NUMBER_A, "Ivan", 1000);
         DebitAccount to = new DebitAccount(NUMBER_B, "Petr", 2000);
-        TransferService service = new TransferService(new NoCommission(), new FakeNotificationService());
+        TransferService service = new TransferService(new NoCommission(), new FakeNotificationService(), new BlockedAccountRegistry());
 
         assertThrows(
                 InsufficientFundsException.class,
@@ -195,7 +195,7 @@ public class TransferServiceTest {
         DebitAccount from = new DebitAccount(NUMBER_A, "Ivan", 10000);
         DebitAccount to = new DebitAccount(NUMBER_B, "Petr", 2000);
         FakeNotificationService notificationService = new FakeNotificationService();
-        TransferService service = new TransferService(new NoCommission(), notificationService);
+        TransferService service = new TransferService(new NoCommission(), notificationService, new BlockedAccountRegistry());
 
         service.transfer(from, to, 3000);
 
@@ -207,7 +207,7 @@ public class TransferServiceTest {
         DebitAccount from = new DebitAccount(NUMBER_A, "Ivan", 1000);
         DebitAccount to = new DebitAccount(NUMBER_B, "Petr", 2000);
         FakeNotificationService notificationService = new FakeNotificationService();
-        TransferService service = new TransferService(new NoCommission(), notificationService);
+        TransferService service = new TransferService(new NoCommission(), notificationService, new BlockedAccountRegistry());
 
         assertThrows(
                 InsufficientFundsException.class,
@@ -222,10 +222,59 @@ public class TransferServiceTest {
         DebitAccount from = new DebitAccount(NUMBER_A, "Ivan", 10000);
         DebitAccount to = new DebitAccount(NUMBER_B, "Petr", 2000);
         FakeNotificationService notificationService = new FakeNotificationService();
-        TransferService service = new TransferService(new NoCommission(), notificationService);
+        TransferService service = new TransferService(new NoCommission(), notificationService, new BlockedAccountRegistry());
 
         service.transfer(from, to, 3000);
 
         assertEquals("Transfer 3000.0 completed", notificationService.getLastMessage());
+    }
+
+    // ----------этап 2 - заблокированные счета
+    @Test
+    void transferFromBlockedAccountThrowsException() {
+        DebitAccount from = new DebitAccount(NUMBER_A, "Ivan", 10000);
+        DebitAccount to = new DebitAccount(NUMBER_B, "Petr", 2000);
+        BlockedAccountRegistry blockedAccounts = new BlockedAccountRegistry();
+        blockedAccounts.block(NUMBER_A);
+        TransferService service = new TransferService(new NoCommission(), new FakeNotificationService(), blockedAccounts);
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> service.transfer(from, to, 3000)
+        );
+    }
+
+    @Test
+    void balancesDoNotChangeIfSourceAccountIsBlocked() {
+        DebitAccount from = new DebitAccount(NUMBER_A, "Ivan", 10000);
+        DebitAccount to = new DebitAccount(NUMBER_B, "Petr", 2000);
+        BlockedAccountRegistry blockedAccounts = new BlockedAccountRegistry();
+        blockedAccounts.block(NUMBER_A);
+        TransferService service = new TransferService(new NoCommission(), new FakeNotificationService(), blockedAccounts);
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> service.transfer(from, to, 3000)
+        );
+
+        assertEquals(10000.0, from.getBalance());
+        assertEquals(2000.0, to.getBalance());
+    }
+
+    @Test
+    void noNotificationIfSourceAccountIsBlocked() {
+        DebitAccount from = new DebitAccount(NUMBER_A, "Ivan", 10000);
+        DebitAccount to = new DebitAccount(NUMBER_B, "Petr", 2000);
+        FakeNotificationService notificationService = new FakeNotificationService();
+        BlockedAccountRegistry blockedAccounts = new BlockedAccountRegistry();
+        blockedAccounts.block(NUMBER_A);
+        TransferService service = new TransferService(new NoCommission(), notificationService, blockedAccounts);
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> service.transfer(from, to, 3000)
+        );
+
+        assertEquals(0, notificationService.getNotificationCount());
     }
 }
