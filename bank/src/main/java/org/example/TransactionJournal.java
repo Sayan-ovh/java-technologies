@@ -1,6 +1,7 @@
 package org.example;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class TransactionJournal {
@@ -16,5 +17,16 @@ public class TransactionJournal {
 
     public int size() {
         return transactions.size();
+    }
+
+    // ----------этап 5 - удаляем отклоненные операции через iterator
+    public void removeRejected() {
+        Iterator<Transaction> iterator = transactions.iterator();
+        while (iterator.hasNext()) {
+            Transaction tx = iterator.next();
+            if (tx.status() == TransactionStatus.REJECTED) {
+                iterator.remove();
+            }
+        }
     }
 }
