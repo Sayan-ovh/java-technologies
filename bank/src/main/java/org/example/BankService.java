@@ -26,4 +26,23 @@ public class BankService {
     public boolean closeAccount(AccountNumber number) {
         return accounts.deleteById(number);
     }
+
+    // ----------этап 2 - перевод по номерам счетов
+    public void transfer(
+            AccountNumber fromNumber,
+            AccountNumber toNumber,
+            double amount) {
+        BankAccount from = accounts.findById(fromNumber);
+        BankAccount to = accounts.findById(toNumber);
+
+        // findById возвращает null, если счета нет, поэтому проверяем оба
+        if (from == null) {
+            throw new IllegalArgumentException("Source account not found");
+        }
+        if (to == null) {
+            throw new IllegalArgumentException("Target account not found");
+        }
+
+        transferService.transfer(from, to, amount);
+    }
 }
