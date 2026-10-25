@@ -62,4 +62,18 @@ public class TransactionJournalTest {
 
         assertEquals(1, journal.size());
     }
+
+    // ----------этап 4 - индекс по номеру счета
+    @Test
+    void addedTransactionIsFoundInListAndInIndex() {
+        TransactionJournal journal = new TransactionJournal();
+        Transaction tx1 = new Transaction(1L, TransactionType.TRANSFER, NUMBER_A, 1000, TransactionStatus.SUCCESS);
+
+        journal.add(tx1);
+
+        // список
+        assertEquals(1, journal.findAll().size());
+        // индекс
+        assertEquals(1, journal.findByAccount(NUMBER_A).size());
+    }
 }

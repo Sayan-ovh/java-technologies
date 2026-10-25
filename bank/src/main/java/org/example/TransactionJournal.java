@@ -6,24 +6,21 @@ import java.util.List;
 
 public class TransactionJournal {
     private final List<Transaction> transactions = new ArrayList<>();
+    private TransactionIndex index = new TransactionIndex();
 
     public void add(Transaction transaction) {
+        // пишем и в список, и в индекс, чтобы они не расходились
         transactions.add(transaction);
+        index.add(transaction);
     }
 
     public List<Transaction> findAll() {
         return new ArrayList<>(transactions);
     }
 
-    // ----------этап 3 - исходящие операции счета, простым проходом по списку
+    // ----------этап 4 - операции счета берем из индекса
     public List<Transaction> findByAccount(AccountNumber number) {
-        List<Transaction> result = new ArrayList<>();
-        for (Transaction tx : transactions) {
-            if (tx.account().equals(number)) {
-                result.add(tx);
-            }
-        }
-        return result;
+        return index.findByAccount(number);
     }
 
     public int size() {
@@ -38,6 +35,12 @@ public class TransactionJournal {
             if (tx.status() == TransactionStatus.REJECTED) {
                 iterator.remove();
             }
+        }
+
+        // из списка удалили, значит индекс тоже надо обновить
+        index = new TransactionIndex();
+        for (Transaction tx : transactions) {
+            index.add(tx);
         }
     }
 }
