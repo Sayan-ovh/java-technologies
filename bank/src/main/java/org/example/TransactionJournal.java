@@ -15,6 +15,17 @@ public class TransactionJournal {
         return new ArrayList<>(transactions);
     }
 
+    // ----------этап 3 - исходящие операции счета, простым проходом по списку
+    public List<Transaction> findByAccount(AccountNumber number) {
+        List<Transaction> result = new ArrayList<>();
+        for (Transaction tx : transactions) {
+            if (tx.account().equals(number)) {
+                result.add(tx);
+            }
+        }
+        return result;
+    }
+
     public int size() {
         return transactions.size();
     }
