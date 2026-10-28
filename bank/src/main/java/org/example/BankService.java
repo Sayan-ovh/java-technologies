@@ -1,5 +1,8 @@
 package org.example;
 
+import java.util.List;
+import java.util.function.Predicate;
+
 public class BankService {
     private final Repository<AccountNumber, BankAccount> accounts;
     private final TransferService transferService;
@@ -44,5 +47,11 @@ public class BankService {
         }
 
         transferService.transfer(from, to, amount);
+    }
+
+    // ----------этап 3 - поиск счетов по условию
+    public List<BankAccount> findAccounts(
+            Predicate<? super BankAccount> condition) {
+        return CollectionFunctions.filter(accounts.findAll(), condition);
     }
 }
