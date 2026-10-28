@@ -1,6 +1,10 @@
 package org.example;
 
 import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TransferServiceTest {
@@ -276,5 +280,61 @@ public class TransferServiceTest {
         );
 
         assertEquals(0, notificationService.getNotificationCount());
+    }
+
+    // ----------этап 2 - lambda вместо отдельных классов
+    @Test
+    void transferWithoutCommissionUsingLambda() {
+        DebitAccount from = new DebitAccount(NUMBER_A, "Ivan", 10000);
+        DebitAccount to = new DebitAccount(NUMBER_B, "Petr", 2000);
+        CommissionPolicy noCommission = amount -> 0.0;
+        TransferService service = new TransferService(noCommission, new FakeNotificationService(), new BlockedAccountRegistry(), new TransactionJournal());
+
+        service.transfer(from, to, 3000);
+
+        assertEquals(7000.0, from.getBalance());
+        assertEquals(5000.0, to.getBalance());
+    }
+
+    @Test
+    void transferWithOnePercentCommissionUsingLambda() {
+        DebitAccount from = new DebitAccount(NUMBER_A, "Ivan", 20000);
+        DebitAccount to = new DebitAccount(NUMBER_B, "Petr", 0);
+        CommissionPolicy onePercent = amount -> amount * 0.01;
+        TransferService service = new TransferService(onePercent, new FakeNotificationService(), new BlockedAccountRegistry(), new TransactionJournal());
+
+        service.transfer(from, to, 10000);
+
+        // списалось 10000 + 100 комиссии
+        assertEquals(9900.0, from.getBalance());
+        assertEquals(10000.0, to.getBalance());
+    }
+
+    @Test
+    void notificationUsingLambda() {
+        DebitAccount from = new DebitAccount(NUMBER_A, "Ivan", 10000);
+        DebitAccount to = new DebitAccount(NUMBER_B, "Petr", 2000);
+        List<String> messages = new ArrayList<>();
+        NotificationService notificationService = message -> messages.add(message);
+        TransferService service = new TransferService(new NoCommission(), notificationService, new BlockedAccountRegistry(), new TransactionJournal());
+
+        service.transfer(from, to, 3000);
+
+        assertEquals(1, messages.size());
+        assertEquals("Transfer 3000.0 completed", messages.get(0));
+    }
+
+    @Test
+    void notificationUsingMethodReference() {
+        DebitAccount from = new DebitAccount(NUMBER_A, "Ivan", 10000);
+        DebitAccount to = new DebitAccount(NUMBER_B, "Petr", 2000);
+        List<String> messages = new ArrayList<>();
+        NotificationService notificationService = messages::add;
+        TransferService service = new TransferService(new NoCommission(), notificationService, new BlockedAccountRegistry(), new TransactionJournal());
+
+        service.transfer(from, to, 3000);
+
+        assertEquals(1, messages.size());
+        assertEquals("Transfer 3000.0 completed", messages.get(0));
     }
 }
