@@ -1,12 +1,17 @@
 package org.example;
 
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.function.Predicate;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class BankServiceTest {
 
     private static final AccountNumber NUMBER_A = new AccountNumber("1111111111");
     private static final AccountNumber NUMBER_B = new AccountNumber("2222222222");
+    private static final AccountNumber NUMBER_C = new AccountNumber("3333333333");
 
     private final BlockedAccountRegistry blockedAccounts = new BlockedAccountRegistry();
 
@@ -110,5 +115,119 @@ public class BankServiceTest {
 
         assertEquals(1000.0, bank.findAccount(NUMBER_A).getBalance());
         assertEquals(2000.0, bank.findAccount(NUMBER_B).getBalance());
+    }
+
+    // ----------этап 4 - композиция Predicate
+    @Test
+    void findAccountsWithBalanceNotLessThanGivenAmount() {
+        DebitAccount small = new DebitAccount(NUMBER_A, "Ivan", 1000);
+        DebitAccount middle = new DebitAccount(NUMBER_B, "Petr", 5000);
+        DebitAccount big = new DebitAccount(NUMBER_C, "Anna", 20000);
+        bank.openAccount(small);
+        bank.openAccount(middle);
+        bank.openAccount(big);
+        double minBalance = 5000;
+        Predicate<BankAccount> enoughMoney =
+                a -> a.getBalance() >= minBalance;
+
+        List<BankAccount> result = bank.findAccounts(enoughMoney);
+
+        assertEquals(2, result.size());
+        assertTrue(result.contains(middle));
+        assertTrue(result.contains(big));
+    }
+
+    @Test
+    void findNotBlockedAccounts() {
+        DebitAccount blocked = new DebitAccount(NUMBER_A, "Ivan", 1000);
+        DebitAccount free1 = new DebitAccount(NUMBER_B, "Petr", 5000);
+        DebitAccount free2 = new DebitAccount(NUMBER_C, "Anna", 20000);
+        bank.openAccount(blocked);
+        bank.openAccount(free1);
+        bank.openAccount(free2);
+        blockedAccounts.block(NUMBER_A);
+        Predicate<BankAccount> notBlocked =
+                a -> !blockedAccounts.isBlocked(a.getId());
+
+        List<BankAccount> result = bank.findAccounts(notBlocked);
+
+        assertEquals(2, result.size());
+        assertTrue(result.contains(free1));
+        assertTrue(result.contains(free2));
+    }
+
+    @Test
+    void findOnlyDebitAccounts() {
+        DebitAccount debit = new DebitAccount(NUMBER_A, "Ivan", 5000);
+        SavingsAccount savings = new SavingsAccount(NUMBER_B, "Petr", 5000, 1000);
+        CreditAccount credit = new CreditAccount(NUMBER_C, "Anna", 2000, 10000);
+        bank.openAccount(debit);
+        bank.openAccount(savings);
+        bank.openAccount(credit);
+        Predicate<BankAccount> debitCondition =
+                DebitAccount.class::isInstance;
+
+        List<BankAccount> result = bank.findAccounts(debitCondition);
+
+        assertEquals(1, result.size());
+        assertTrue(result.contains(debit));
+    }
+
+    @Test
+    void findRichAndNotBlockedAccounts() {
+        DebitAccount richBlocked = new DebitAccount(NUMBER_A, "Ivan", 150000);
+        DebitAccount richFree = new DebitAccount(NUMBER_B, "Petr", 200000);
+        DebitAccount poorFree = new DebitAccount(NUMBER_C, "Anna", 5000);
+        bank.openAccount(richBlocked);
+        bank.openAccount(richFree);
+        bank.openAccount(poorFree);
+        blockedAccounts.block(NUMBER_A);
+        Predicate<BankAccount> rich =
+                a -> a.getBalance() >= 100_000;
+        Predicate<BankAccount> notBlocked =
+                a -> !blockedAccounts.isBlocked(a.getId());
+
+        List<BankAccount> result = bank.findAccounts(rich.and(notBlocked));
+
+        assertEquals(1, result.size());
+        assertTrue(result.contains(richFree));
+    }
+
+    @Test
+    void findNotDebitAccounts() {
+        DebitAccount debit = new DebitAccount(NUMBER_A, "Ivan", 5000);
+        SavingsAccount savings = new SavingsAccount(NUMBER_B, "Petr", 5000, 1000);
+        CreditAccount credit = new CreditAccount(NUMBER_C, "Anna", 2000, 10000);
+        bank.openAccount(debit);
+        bank.openAccount(savings);
+        bank.openAccount(credit);
+        Predicate<BankAccount> debitCondition =
+                DebitAccount.class::isInstance;
+
+        List<BankAccount> result = bank.findAccounts(debitCondition.negate());
+
+        assertEquals(2, result.size());
+        assertTrue(result.contains(savings));
+        assertTrue(result.contains(credit));
+    }
+
+    @Test
+    void findRichOrCreditAccounts() {
+        DebitAccount rich = new DebitAccount(NUMBER_A, "Ivan", 150000);
+        DebitAccount poorDebit = new DebitAccount(NUMBER_B, "Petr", 5000);
+        CreditAccount credit = new CreditAccount(NUMBER_C, "Anna", 2000, 10000);
+        bank.openAccount(rich);
+        bank.openAccount(poorDebit);
+        bank.openAccount(credit);
+        Predicate<BankAccount> richCondition =
+                a -> a.getBalance() >= 100_000;
+        Predicate<BankAccount> creditCondition =
+                CreditAccount.class::isInstance;
+
+        List<BankAccount> result = bank.findAccounts(richCondition.or(creditCondition));
+
+        assertEquals(2, result.size());
+        assertTrue(result.contains(rich));
+        assertTrue(result.contains(credit));
     }
 }
