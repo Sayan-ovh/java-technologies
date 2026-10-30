@@ -2,6 +2,7 @@ package org.example;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -12,6 +13,7 @@ public class BankServiceTest {
     private static final AccountNumber NUMBER_A = new AccountNumber("1111111111");
     private static final AccountNumber NUMBER_B = new AccountNumber("2222222222");
     private static final AccountNumber NUMBER_C = new AccountNumber("3333333333");
+    private static final AccountNumber NUMBER_D = new AccountNumber("4444444444");
 
     private final BlockedAccountRegistry blockedAccounts = new BlockedAccountRegistry();
 
@@ -229,5 +231,85 @@ public class BankServiceTest {
         assertEquals(2, result.size());
         assertTrue(result.contains(rich));
         assertTrue(result.contains(credit));
+    }
+
+    // ----------этап 5 - Comparator
+    @Test
+    void sortedByBalanceAscending() {
+        DebitAccount a5000 = new DebitAccount(NUMBER_A, "Ivan", 5000);
+        DebitAccount a1000 = new DebitAccount(NUMBER_B, "Petr", 1000);
+        DebitAccount a3000 = new DebitAccount(NUMBER_C, "Anna", 3000);
+        bank.openAccount(a5000);
+        bank.openAccount(a1000);
+        bank.openAccount(a3000);
+        Comparator<BankAccount> byBalance =
+                Comparator.comparingDouble(BankAccount::getBalance);
+
+        List<BankAccount> result = bank.sortedAccounts(byBalance);
+
+        assertSame(a1000, result.get(0));
+        assertSame(a3000, result.get(1));
+        assertSame(a5000, result.get(2));
+    }
+
+    @Test
+    void sortedByBalanceDescending() {
+        DebitAccount a5000 = new DebitAccount(NUMBER_A, "Ivan", 5000);
+        DebitAccount a1000 = new DebitAccount(NUMBER_B, "Petr", 1000);
+        DebitAccount a3000 = new DebitAccount(NUMBER_C, "Anna", 3000);
+        bank.openAccount(a5000);
+        bank.openAccount(a1000);
+        bank.openAccount(a3000);
+        Comparator<BankAccount> byBalance =
+                Comparator.comparingDouble(BankAccount::getBalance);
+        Comparator<BankAccount> byBalanceDesc =
+                byBalance.reversed();
+
+        List<BankAccount> result = bank.sortedAccounts(byBalanceDesc);
+
+        assertSame(a5000, result.get(0));
+        assertSame(a3000, result.get(1));
+        assertSame(a1000, result.get(2));
+    }
+
+    @Test
+    void sortedByAccountNumber() {
+        DebitAccount first = new DebitAccount(NUMBER_A, "Ivan", 5000);
+        DebitAccount second = new DebitAccount(NUMBER_B, "Petr", 1000);
+        DebitAccount third = new DebitAccount(NUMBER_C, "Anna", 3000);
+        bank.openAccount(third);
+        bank.openAccount(first);
+        bank.openAccount(second);
+        Comparator<BankAccount> byNumber =
+                Comparator.comparing(a -> a.getId().value());
+
+        List<BankAccount> result = bank.sortedAccounts(byNumber);
+
+        assertSame(first, result.get(0));
+        assertSame(second, result.get(1));
+        assertSame(third, result.get(2));
+    }
+
+    @Test
+    void sortedByTypeThenBalance() {
+        DebitAccount debit5000 = new DebitAccount(NUMBER_A, "Ivan", 5000);
+        DebitAccount debit1000 = new DebitAccount(NUMBER_B, "Petr", 1000);
+        CreditAccount credit = new CreditAccount(NUMBER_C, "Anna", 3000, 10000);
+        SavingsAccount savings = new SavingsAccount(NUMBER_D, "Oleg", 2000, 500);
+        bank.openAccount(debit5000);
+        bank.openAccount(debit1000);
+        bank.openAccount(credit);
+        bank.openAccount(savings);
+        Comparator<BankAccount> byTypeThenBalance =
+                Comparator
+                        .comparing((BankAccount a) -> a.getClass().getSimpleName())
+                        .thenComparingDouble(BankAccount::getBalance);
+
+        List<BankAccount> result = bank.sortedAccounts(byTypeThenBalance);
+
+        assertSame(credit, result.get(0));
+        assertSame(debit1000, result.get(1));
+        assertSame(debit5000, result.get(2));
+        assertSame(savings, result.get(3));
     }
 }
