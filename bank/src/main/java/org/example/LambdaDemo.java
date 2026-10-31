@@ -3,6 +3,7 @@ package org.example;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class LambdaDemo {
@@ -55,5 +56,19 @@ public class LambdaDemo {
                 account -> account.getId() + " : " + account.getBalance();
         List<String> labels = CollectionFunctions.map(accounts, label);
         System.out.println(labels);
+
+        // ----------этап 7 - Consumer: действие над каждым элементом
+        Consumer<AccountSummary> printer =
+                summary -> System.out.println(summary);
+        CollectionFunctions.forEach(
+                summaries,
+                printer
+        );
+
+        // то же самое через method reference
+        CollectionFunctions.forEach(
+                summaries,
+                System.out::println
+        );
     }
 }
