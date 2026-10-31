@@ -3,6 +3,7 @@ package org.example;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Function;
 
 public class LambdaDemo {
     public static void main(String[] args) {
@@ -38,5 +39,21 @@ public class LambdaDemo {
         List<BankAccount> sortedFactory = new ArrayList<>(accounts);
         sortedFactory.sort(byBalance);
         System.out.println(sortedFactory);
+
+        // ----------этап 6 - Function: преобразование объектов
+        Function<BankAccount, AccountSummary> toSummary =
+                account -> new AccountSummary(
+                        account.getId(),
+                        account.getClass().getSimpleName(),
+                        account.getBalance()
+                );
+        List<AccountSummary> summaries =
+                CollectionFunctions.map(accounts, toSummary);
+
+        // строковое представление
+        Function<BankAccount, String> label =
+                account -> account.getId() + " : " + account.getBalance();
+        List<String> labels = CollectionFunctions.map(accounts, label);
+        System.out.println(labels);
     }
 }
