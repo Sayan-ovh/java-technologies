@@ -351,4 +351,17 @@ public class BankServiceTest {
         assertTrue(result.contains(rich1));
         assertTrue(result.contains(rich2));
     }
+
+    // ----------этап 3 - map
+    @Test
+    void getAccountSummariesConvertsTypeAndBalance() {
+        bank.openAccount(new DebitAccount(NUMBER_A, "Ivan", 5000));
+        bank.openAccount(new SavingsAccount(NUMBER_B, "Petr", 150000, 1000));
+
+        List<AccountSummary> summaries = bank.getAccountSummaries();
+
+        assertEquals(2, summaries.size());
+        assertTrue(summaries.contains(new AccountSummary(NUMBER_A, "DebitAccount", 5000.0)));
+        assertTrue(summaries.contains(new AccountSummary(NUMBER_B, "SavingsAccount", 150000.0)));
+    }
 }
