@@ -65,4 +65,23 @@ public class BankService {
         result.sort(comparator);
         return result;
     }
+
+    // ----------этап 2 - filter
+    public List<BankAccount> findRichAccounts(double minBalance) {
+        return accounts.findAll().stream()
+                .filter(a -> a.getBalance() >= minBalance)
+                .toList();
+    }
+
+    public List<BankAccount> findDebitAccounts() {
+        return accounts.findAll().stream()
+                .filter(DebitAccount.class::isInstance)
+                .toList();
+    }
+
+    public List<BankAccount> findAccountsByOwner(String owner) {
+        return accounts.findAll().stream()
+                .filter(a -> a.getOwner().equals(owner))
+                .toList();
+    }
 }

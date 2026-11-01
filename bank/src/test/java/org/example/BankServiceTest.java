@@ -312,4 +312,43 @@ public class BankServiceTest {
         assertSame(debit5000, result.get(2));
         assertSame(savings, result.get(3));
     }
+
+    // ----------этап 2 - filter
+    @Test
+    void findRichAccountsWithNoMatches() {
+        bank.openAccount(new DebitAccount(NUMBER_A, "Ivan", 1000));
+        bank.openAccount(new DebitAccount(NUMBER_B, "Petr", 2000));
+
+        List<BankAccount> result = bank.findRichAccounts(100_000);
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void findRichAccountsWithOneMatch() {
+        DebitAccount rich = new DebitAccount(NUMBER_A, "Ivan", 150000);
+        bank.openAccount(rich);
+        bank.openAccount(new DebitAccount(NUMBER_B, "Petr", 2000));
+
+        List<BankAccount> result = bank.findRichAccounts(100_000);
+
+        assertEquals(1, result.size());
+        assertSame(rich, result.get(0));
+    }
+
+    @Test
+    void findRichAccountsWithSeveralMatches() {
+        DebitAccount rich1 = new DebitAccount(NUMBER_A, "Ivan", 150000);
+        DebitAccount rich2 = new DebitAccount(NUMBER_B, "Petr", 200000);
+        DebitAccount poor = new DebitAccount(NUMBER_C, "Anna", 5000);
+        bank.openAccount(rich1);
+        bank.openAccount(rich2);
+        bank.openAccount(poor);
+
+        List<BankAccount> result = bank.findRichAccounts(100_000);
+
+        assertEquals(2, result.size());
+        assertTrue(result.contains(rich1));
+        assertTrue(result.contains(rich2));
+    }
 }
