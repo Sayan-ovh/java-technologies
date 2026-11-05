@@ -8,12 +8,15 @@ import java.util.function.Predicate;
 public class BankService {
     private final Repository<AccountNumber, BankAccount> accounts;
     private final TransferService transferService;
+    private final BlockedAccountRegistry blockedAccounts;
 
     public BankService(
             Repository<AccountNumber, BankAccount> accounts,
-            TransferService transferService) {
+            TransferService transferService,
+            BlockedAccountRegistry blockedAccounts) {
         this.accounts = accounts;
         this.transferService = transferService;
+        this.blockedAccounts = blockedAccounts;
     }
 
     public void openAccount(BankAccount account) {
@@ -128,5 +131,21 @@ public class BankService {
                         .comparing(BankAccount::getOwner)
                         .thenComparing(a -> a.getId().value()))
                 .toList();
+    }
+
+    // ----------этап 5 - short-circuit
+    public boolean hasBlockedAccounts() {
+        return accounts.findAll().stream()
+                .anyMatch(a -> blockedAccounts.isBlocked(a.getId()));
+    }
+
+    public boolean allAccountsPositive() {
+        return accounts.findAll().stream()
+                .allMatch(a -> a.getBalance() > 0);
+    }
+
+    public boolean noCreditAccounts() {
+        return accounts.findAll().stream()
+                .noneMatch(CreditAccount.class::isInstance);
     }
 }

@@ -2,6 +2,7 @@ package org.example;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
@@ -21,7 +22,8 @@ public class BankServiceTest {
     private final BankService bank = new BankService(
             repository,
             new TransferService(new NoCommission(), new FakeNotificationService(),
-                    blockedAccounts, new TransactionJournal())
+                    blockedAccounts, new TransactionJournal()),
+            blockedAccounts
     );
 
     // ----------этап 1 - банковский сервис
@@ -394,5 +396,75 @@ public class BankServiceTest {
 
         List<BankAccount> after = repository.findAll();
         assertEquals(before, after);
+    }
+
+    // ----------этап 5 - short-circuit
+    @Test
+    void hasBlockedAccountsReturnsTrueIfSomeAccountIsBlocked() {
+        bank.openAccount(new DebitAccount(NUMBER_A, "Ivan", 5000));
+        bank.openAccount(new DebitAccount(NUMBER_B, "Petr", 1000));
+        blockedAccounts.block(NUMBER_B);
+
+        assertTrue(bank.hasBlockedAccounts());
+    }
+
+    @Test
+    void hasBlockedAccountsReturnsFalseIfNoAccountIsBlocked() {
+        bank.openAccount(new DebitAccount(NUMBER_A, "Ivan", 5000));
+        bank.openAccount(new DebitAccount(NUMBER_B, "Petr", 1000));
+
+        assertFalse(bank.hasBlockedAccounts());
+    }
+
+    @Test
+    void allAccountsPositiveReturnsTrueIfAllBalancesArePositive() {
+        bank.openAccount(new DebitAccount(NUMBER_A, "Ivan", 5000));
+        bank.openAccount(new DebitAccount(NUMBER_B, "Petr", 1000));
+
+        assertTrue(bank.allAccountsPositive());
+    }
+
+    @Test
+    void allAccountsPositiveReturnsFalseIfSomeBalanceIsZero() {
+        bank.openAccount(new DebitAccount(NUMBER_A, "Ivan", 5000));
+        bank.openAccount(new DebitAccount(NUMBER_B, "Petr", 0));
+
+        assertFalse(bank.allAccountsPositive());
+    }
+
+    @Test
+    void noCreditAccountsReturnsTrueIfThereAreNoCreditAccounts() {
+        bank.openAccount(new DebitAccount(NUMBER_A, "Ivan", 5000));
+        bank.openAccount(new SavingsAccount(NUMBER_B, "Petr", 5000, 1000));
+
+        assertTrue(bank.noCreditAccounts());
+    }
+
+    @Test
+    void noCreditAccountsReturnsFalseIfThereIsCreditAccount() {
+        bank.openAccount(new DebitAccount(NUMBER_A, "Ivan", 5000));
+        bank.openAccount(new CreditAccount(NUMBER_B, "Petr", 2000, 10000));
+
+        assertFalse(bank.noCreditAccounts());
+    }
+
+    @Test
+    void anyMatchStopsBeforeTheEndOfTheList() {
+        List<BankAccount> list = new ArrayList<>();
+        list.add(new DebitAccount(NUMBER_A, "Ivan", 150000));
+        list.add(new DebitAccount(NUMBER_B, "Petr", 1000));
+        list.add(new DebitAccount(NUMBER_C, "Anna", 2000));
+        list.add(new DebitAccount(NUMBER_D, "Oleg", 3000));
+        int[] calls = {0};
+        Predicate<BankAccount> countingPredicate = a -> {
+            calls[0]++;
+            return a.getBalance() >= 100_000;
+        };
+
+        boolean found = list.stream().anyMatch(countingPredicate);
+
+        assertTrue(found);
+        // в списке 4 счета, а предикат вызвали только 1 раз
+        assertEquals(1, calls[0]);
     }
 }
