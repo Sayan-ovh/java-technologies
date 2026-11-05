@@ -16,9 +16,10 @@ public class BankServiceTest {
     private static final AccountNumber NUMBER_D = new AccountNumber("4444444444");
 
     private final BlockedAccountRegistry blockedAccounts = new BlockedAccountRegistry();
+    private final Repository<AccountNumber, BankAccount> repository = new InMemoryRepository<>();
 
     private final BankService bank = new BankService(
-            new InMemoryRepository<>(),
+            repository,
             new TransferService(new NoCommission(), new FakeNotificationService(),
                     blockedAccounts, new TransactionJournal())
     );
@@ -363,5 +364,35 @@ public class BankServiceTest {
         assertEquals(2, summaries.size());
         assertTrue(summaries.contains(new AccountSummary(NUMBER_A, "DebitAccount", 5000.0)));
         assertTrue(summaries.contains(new AccountSummary(NUMBER_B, "SavingsAccount", 150000.0)));
+    }
+
+    // ----------этап 4 - sorted
+    @Test
+    void richestFirstSortsByBalanceDescending() {
+        DebitAccount a5000 = new DebitAccount(NUMBER_A, "Ivan", 5000);
+        DebitAccount a1000 = new DebitAccount(NUMBER_B, "Petr", 1000);
+        DebitAccount a3000 = new DebitAccount(NUMBER_C, "Anna", 3000);
+        bank.openAccount(a5000);
+        bank.openAccount(a1000);
+        bank.openAccount(a3000);
+
+        List<BankAccount> result = bank.richestFirst();
+
+        assertSame(a5000, result.get(0));
+        assertSame(a3000, result.get(1));
+        assertSame(a1000, result.get(2));
+    }
+
+    @Test
+    void richestFirstDoesNotChangeRepositoryOrder() {
+        bank.openAccount(new DebitAccount(NUMBER_A, "Ivan", 5000));
+        bank.openAccount(new DebitAccount(NUMBER_B, "Petr", 1000));
+        bank.openAccount(new DebitAccount(NUMBER_C, "Anna", 3000));
+        List<BankAccount> before = repository.findAll();
+
+        bank.richestFirst();
+
+        List<BankAccount> after = repository.findAll();
+        assertEquals(before, after);
     }
 }
