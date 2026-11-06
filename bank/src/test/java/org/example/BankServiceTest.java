@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalDouble;
 import java.util.function.Predicate;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -489,5 +490,43 @@ public class BankServiceTest {
         Optional<BankAccount> result = bank.findFirstRichAccount(100_000);
 
         assertTrue(result.isEmpty());
+    }
+
+    // ----------этап 7 - sum, average, max
+    @Test
+    void totalBalanceOfEmptyBankIsZero() {
+        assertEquals(0.0, bank.totalBalance());
+    }
+
+    @Test
+    void totalBalanceSumsAllAccounts() {
+        bank.openAccount(new DebitAccount(NUMBER_A, "Ivan", 1000));
+        bank.openAccount(new DebitAccount(NUMBER_B, "Petr", 2000));
+        bank.openAccount(new DebitAccount(NUMBER_C, "Anna", 3000));
+
+        assertEquals(6000.0, bank.totalBalance());
+    }
+
+    @Test
+    void averageBalanceOfEmptyBankIsEmpty() {
+        assertEquals(OptionalDouble.empty(), bank.averageBalance());
+    }
+
+    @Test
+    void richestAccountReturnsAccountWithMaxBalance() {
+        DebitAccount richest = new DebitAccount(NUMBER_B, "Petr", 9000);
+        bank.openAccount(new DebitAccount(NUMBER_A, "Ivan", 1000));
+        bank.openAccount(richest);
+        bank.openAccount(new DebitAccount(NUMBER_C, "Anna", 3000));
+
+        Optional<BankAccount> result = bank.richestAccount();
+
+        assertTrue(result.isPresent());
+        assertSame(richest, result.get());
+    }
+
+    @Test
+    void richestAccountOfEmptyBankIsEmpty() {
+        assertTrue(bank.richestAccount().isEmpty());
     }
 }
