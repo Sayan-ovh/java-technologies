@@ -25,5 +25,26 @@ public class StreamDemo {
                         .toList();
         System.out.println(resultByLoop);
         System.out.println(resultByStream);
+
+        // ----------этап 6 - findFirst и Optional
+        BlockedAccountRegistry blockedAccounts = new BlockedAccountRegistry();
+        BankService bank = new BankService(
+                new InMemoryRepository<>(),
+                new TransferService(new NoCommission(), new ConsoleNotificationService(),
+                        blockedAccounts, new TransactionJournal()),
+                blockedAccounts
+        );
+        for (BankAccount opened : accounts) {
+            bank.openAccount(opened);
+        }
+
+        BankAccount account = bank.findFirstRichAccount(100_000)
+                .orElseThrow(() ->
+                        new IllegalStateException("No rich account"));
+        String label = bank.findFirstRichAccount(100_000)
+                .map(a -> a.getId().value())
+                .orElse("not found");
+        System.out.println(account);
+        System.out.println(label);
     }
 }

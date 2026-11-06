@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -466,5 +467,27 @@ public class BankServiceTest {
         assertTrue(found);
         // в списке 4 счета, а предикат вызвали только 1 раз
         assertEquals(1, calls[0]);
+    }
+
+    // ----------этап 6 - findFirst и Optional
+    @Test
+    void findFirstRichAccountReturnsAccountIfExists() {
+        DebitAccount rich = new DebitAccount(NUMBER_A, "Ivan", 150000);
+        bank.openAccount(rich);
+        bank.openAccount(new DebitAccount(NUMBER_B, "Petr", 1000));
+
+        Optional<BankAccount> result = bank.findFirstRichAccount(100_000);
+
+        assertTrue(result.isPresent());
+        assertSame(rich, result.get());
+    }
+
+    @Test
+    void findFirstRichAccountReturnsEmptyIfNotFound() {
+        bank.openAccount(new DebitAccount(NUMBER_A, "Ivan", 1000));
+
+        Optional<BankAccount> result = bank.findFirstRichAccount(100_000);
+
+        assertTrue(result.isEmpty());
     }
 }
