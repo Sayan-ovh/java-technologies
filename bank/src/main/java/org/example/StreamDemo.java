@@ -46,5 +46,18 @@ public class StreamDemo {
                 .orElse("not found");
         System.out.println(account);
         System.out.println(label);
+
+        // ----------этап 8 - reduce
+        // сначала вручную
+        double totalByLoop = 0;
+        for (BankAccount a : accounts) {
+            totalByLoop += a.getBalance();
+        }
+        // затем через reduce
+        double totalByReduce = accounts.stream()
+                .map(BankAccount::getBalance)
+                .reduce(0.0, Double::sum);
+        System.out.println(totalByLoop);
+        System.out.println(totalByReduce);
     }
 }
