@@ -1,5 +1,6 @@
 package org.example;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -24,13 +25,9 @@ public final class GenericUtils {
         if (values == null) {
             return false;
         }
-        for (T value : values) {
-            // Objects.equals вызывает equals() и не падает, если value равен null
-            if (Objects.equals(value, target)) {
-                return true;
-            }
-        }
-        return false;
+        // Objects.equals вызывает equals() и не падает, если value равен null
+        return Arrays.stream(values)
+                .anyMatch(value -> Objects.equals(value, target));
     }
 
     // source отдает нам значения (extends), target принимает их (super)

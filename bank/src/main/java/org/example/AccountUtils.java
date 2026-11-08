@@ -1,16 +1,15 @@
 package org.example;
 
+import java.util.Comparator;
 import java.util.List;
 
 public final class AccountUtils {
 
     // список только читаем, значит extends (Producer Extends)
     public static double totalBalance(List<? extends BankAccount> accounts) {
-        double total = 0;
-        for (BankAccount account : accounts) {
-            total += account.getBalance();
-        }
-        return total;
+        return accounts.stream()
+                .mapToDouble(BankAccount::getBalance)
+                .sum();
     }
 
     // в список только кладем, значит super (Consumer Super)
@@ -24,12 +23,8 @@ public final class AccountUtils {
         if (accounts == null || accounts.isEmpty()) {
             throw new IllegalArgumentException("Account list is empty");
         }
-        T best = accounts.get(0);
-        for (T account : accounts) {
-            if (account.getBalance() > best.getBalance()) {
-                best = account;
-            }
-        }
-        return best;
+        return accounts.stream()
+                .max(Comparator.comparingDouble(BankAccount::getBalance))
+                .get();
     }
 }
