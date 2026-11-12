@@ -28,20 +28,17 @@ public class StreamDemo {
 
         // ----------этап 6 - findFirst и Optional
         BlockedAccountRegistry blockedAccounts = new BlockedAccountRegistry();
-        BankService bank = new BankService(
-                new InMemoryRepository<>(),
-                new TransferService(new NoCommission(), new ConsoleNotificationService(),
-                        blockedAccounts, new TransactionJournal()),
-                blockedAccounts
-        );
+        Repository<AccountNumber, BankAccount> repository = new InMemoryRepository<>();
+        AccountService accountService = new AccountService(repository);
+        BankReportService reports = new BankReportService(repository, blockedAccounts);
         for (BankAccount opened : accounts) {
-            bank.openAccount(opened);
+            accountService.open(opened);
         }
 
-        BankAccount account = bank.findFirstRichAccount(100_000)
+        BankAccount account = reports.findFirstRichAccount(100_000)
                 .orElseThrow(() ->
                         new IllegalStateException("No rich account"));
-        String label = bank.findFirstRichAccount(100_000)
+        String label = reports.findFirstRichAccount(100_000)
                 .map(a -> a.getId().value())
                 .orElse("not found");
         System.out.println(account);

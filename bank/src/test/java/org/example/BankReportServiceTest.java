@@ -5,13 +5,14 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.function.Predicate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class BankServiceTest {
+public class BankReportServiceTest {
 
     private static final AccountNumber NUMBER_A = new AccountNumber("1111111111");
     private static final AccountNumber NUMBER_B = new AccountNumber("2222222222");
@@ -20,108 +21,12 @@ public class BankServiceTest {
 
     private final BlockedAccountRegistry blockedAccounts = new BlockedAccountRegistry();
     private final Repository<AccountNumber, BankAccount> repository = new InMemoryRepository<>();
+    private final AccountService accountService = new AccountService(repository);
+    private final BankReportService reports = new BankReportService(repository, blockedAccounts);
+    private final TransactionJournal journal = new TransactionJournal();
 
-    private final BankService bank = new BankService(
-            repository,
-            new TransferService(new NoCommission(), new FakeNotificationService(),
-                    blockedAccounts, new TransactionJournal()),
-            blockedAccounts
-    );
-
-    // ----------этап 1 - банковский сервис
-    @Test
-    void openedAccountCanBeFound() {
-        DebitAccount account = new DebitAccount(NUMBER_A, "Ivan", 10000);
-
-        bank.openAccount(account);
-
-        assertSame(account, bank.findAccount(NUMBER_A));
-    }
-
-    @Test
-    void openingAccountWithSameNumberReplacesOldAccount() {
-        DebitAccount oldAccount = new DebitAccount(NUMBER_A, "Ivan", 1000);
-        DebitAccount newAccount = new DebitAccount(NUMBER_A, "Petr", 5000);
-
-        bank.openAccount(oldAccount);
-        bank.openAccount(newAccount);
-
-        assertSame(newAccount, bank.findAccount(NUMBER_A));
-    }
-
-    @Test
-    void closedAccountIsNotFoundAnymore() {
-        bank.openAccount(new DebitAccount(NUMBER_A, "Ivan", 10000));
-
-        boolean closed = bank.closeAccount(NUMBER_A);
-
-        assertTrue(closed);
-        assertNull(bank.findAccount(NUMBER_A));
-    }
-
-    // ----------этап 2 - перевод по номерам счетов
-    @Test
-    void transferByNumbersChangesBothBalances() {
-        bank.openAccount(new DebitAccount(NUMBER_A, "Ivan", 10000));
-        bank.openAccount(new DebitAccount(NUMBER_B, "Petr", 2000));
-
-        bank.transfer(NUMBER_A, NUMBER_B, 3000);
-
-        assertEquals(7000.0, bank.findAccount(NUMBER_A).getBalance());
-        assertEquals(5000.0, bank.findAccount(NUMBER_B).getBalance());
-    }
-
-    @Test
-    void transferFromMissingAccountThrowsException() {
-        bank.openAccount(new DebitAccount(NUMBER_B, "Petr", 2000));
-
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> bank.transfer(NUMBER_A, NUMBER_B, 3000)
-        );
-
-        assertEquals(2000.0, bank.findAccount(NUMBER_B).getBalance());
-    }
-
-    @Test
-    void transferToMissingAccountThrowsException() {
-        bank.openAccount(new DebitAccount(NUMBER_A, "Ivan", 10000));
-
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> bank.transfer(NUMBER_A, NUMBER_B, 3000)
-        );
-
-        assertEquals(10000.0, bank.findAccount(NUMBER_A).getBalance());
-    }
-
-    @Test
-    void transferFromBlockedAccountThrowsException() {
-        bank.openAccount(new DebitAccount(NUMBER_A, "Ivan", 10000));
-        bank.openAccount(new DebitAccount(NUMBER_B, "Petr", 2000));
-        blockedAccounts.block(NUMBER_A);
-
-        assertThrows(
-                IllegalStateException.class,
-                () -> bank.transfer(NUMBER_A, NUMBER_B, 3000)
-        );
-
-        assertEquals(10000.0, bank.findAccount(NUMBER_A).getBalance());
-        assertEquals(2000.0, bank.findAccount(NUMBER_B).getBalance());
-    }
-
-    @Test
-    void transferWithoutEnoughMoneyThrowsException() {
-        bank.openAccount(new DebitAccount(NUMBER_A, "Ivan", 1000));
-        bank.openAccount(new DebitAccount(NUMBER_B, "Petr", 2000));
-
-        assertThrows(
-                InsufficientFundsException.class,
-                () -> bank.transfer(NUMBER_A, NUMBER_B, 5000)
-        );
-
-        assertEquals(1000.0, bank.findAccount(NUMBER_A).getBalance());
-        assertEquals(2000.0, bank.findAccount(NUMBER_B).getBalance());
+    private Transaction transaction(long id, AccountNumber number, double amount) {
+        return new Transaction(id, TransactionType.TRANSFER, number, amount, TransactionStatus.SUCCESS);
     }
 
     // ----------этап 4 - композиция Predicate
@@ -130,14 +35,14 @@ public class BankServiceTest {
         DebitAccount small = new DebitAccount(NUMBER_A, "Ivan", 1000);
         DebitAccount middle = new DebitAccount(NUMBER_B, "Petr", 5000);
         DebitAccount big = new DebitAccount(NUMBER_C, "Anna", 20000);
-        bank.openAccount(small);
-        bank.openAccount(middle);
-        bank.openAccount(big);
+        accountService.open(small);
+        accountService.open(middle);
+        accountService.open(big);
         double minBalance = 5000;
         Predicate<BankAccount> enoughMoney =
                 a -> a.getBalance() >= minBalance;
 
-        List<BankAccount> result = bank.findAccounts(enoughMoney);
+        List<BankAccount> result = reports.findAccounts(enoughMoney);
 
         assertEquals(2, result.size());
         assertTrue(result.contains(middle));
@@ -149,14 +54,14 @@ public class BankServiceTest {
         DebitAccount blocked = new DebitAccount(NUMBER_A, "Ivan", 1000);
         DebitAccount free1 = new DebitAccount(NUMBER_B, "Petr", 5000);
         DebitAccount free2 = new DebitAccount(NUMBER_C, "Anna", 20000);
-        bank.openAccount(blocked);
-        bank.openAccount(free1);
-        bank.openAccount(free2);
+        accountService.open(blocked);
+        accountService.open(free1);
+        accountService.open(free2);
         blockedAccounts.block(NUMBER_A);
         Predicate<BankAccount> notBlocked =
                 a -> !blockedAccounts.isBlocked(a.getId());
 
-        List<BankAccount> result = bank.findAccounts(notBlocked);
+        List<BankAccount> result = reports.findAccounts(notBlocked);
 
         assertEquals(2, result.size());
         assertTrue(result.contains(free1));
@@ -168,13 +73,13 @@ public class BankServiceTest {
         DebitAccount debit = new DebitAccount(NUMBER_A, "Ivan", 5000);
         SavingsAccount savings = new SavingsAccount(NUMBER_B, "Petr", 5000, 1000);
         CreditAccount credit = new CreditAccount(NUMBER_C, "Anna", 2000, 10000);
-        bank.openAccount(debit);
-        bank.openAccount(savings);
-        bank.openAccount(credit);
+        accountService.open(debit);
+        accountService.open(savings);
+        accountService.open(credit);
         Predicate<BankAccount> debitCondition =
                 DebitAccount.class::isInstance;
 
-        List<BankAccount> result = bank.findAccounts(debitCondition);
+        List<BankAccount> result = reports.findAccounts(debitCondition);
 
         assertEquals(1, result.size());
         assertTrue(result.contains(debit));
@@ -185,16 +90,16 @@ public class BankServiceTest {
         DebitAccount richBlocked = new DebitAccount(NUMBER_A, "Ivan", 150000);
         DebitAccount richFree = new DebitAccount(NUMBER_B, "Petr", 200000);
         DebitAccount poorFree = new DebitAccount(NUMBER_C, "Anna", 5000);
-        bank.openAccount(richBlocked);
-        bank.openAccount(richFree);
-        bank.openAccount(poorFree);
+        accountService.open(richBlocked);
+        accountService.open(richFree);
+        accountService.open(poorFree);
         blockedAccounts.block(NUMBER_A);
         Predicate<BankAccount> rich =
                 a -> a.getBalance() >= 100_000;
         Predicate<BankAccount> notBlocked =
                 a -> !blockedAccounts.isBlocked(a.getId());
 
-        List<BankAccount> result = bank.findAccounts(rich.and(notBlocked));
+        List<BankAccount> result = reports.findAccounts(rich.and(notBlocked));
 
         assertEquals(1, result.size());
         assertTrue(result.contains(richFree));
@@ -205,13 +110,13 @@ public class BankServiceTest {
         DebitAccount debit = new DebitAccount(NUMBER_A, "Ivan", 5000);
         SavingsAccount savings = new SavingsAccount(NUMBER_B, "Petr", 5000, 1000);
         CreditAccount credit = new CreditAccount(NUMBER_C, "Anna", 2000, 10000);
-        bank.openAccount(debit);
-        bank.openAccount(savings);
-        bank.openAccount(credit);
+        accountService.open(debit);
+        accountService.open(savings);
+        accountService.open(credit);
         Predicate<BankAccount> debitCondition =
                 DebitAccount.class::isInstance;
 
-        List<BankAccount> result = bank.findAccounts(debitCondition.negate());
+        List<BankAccount> result = reports.findAccounts(debitCondition.negate());
 
         assertEquals(2, result.size());
         assertTrue(result.contains(savings));
@@ -223,15 +128,15 @@ public class BankServiceTest {
         DebitAccount rich = new DebitAccount(NUMBER_A, "Ivan", 150000);
         DebitAccount poorDebit = new DebitAccount(NUMBER_B, "Petr", 5000);
         CreditAccount credit = new CreditAccount(NUMBER_C, "Anna", 2000, 10000);
-        bank.openAccount(rich);
-        bank.openAccount(poorDebit);
-        bank.openAccount(credit);
+        accountService.open(rich);
+        accountService.open(poorDebit);
+        accountService.open(credit);
         Predicate<BankAccount> richCondition =
                 a -> a.getBalance() >= 100_000;
         Predicate<BankAccount> creditCondition =
                 CreditAccount.class::isInstance;
 
-        List<BankAccount> result = bank.findAccounts(richCondition.or(creditCondition));
+        List<BankAccount> result = reports.findAccounts(richCondition.or(creditCondition));
 
         assertEquals(2, result.size());
         assertTrue(result.contains(rich));
@@ -244,13 +149,13 @@ public class BankServiceTest {
         DebitAccount a5000 = new DebitAccount(NUMBER_A, "Ivan", 5000);
         DebitAccount a1000 = new DebitAccount(NUMBER_B, "Petr", 1000);
         DebitAccount a3000 = new DebitAccount(NUMBER_C, "Anna", 3000);
-        bank.openAccount(a5000);
-        bank.openAccount(a1000);
-        bank.openAccount(a3000);
+        accountService.open(a5000);
+        accountService.open(a1000);
+        accountService.open(a3000);
         Comparator<BankAccount> byBalance =
                 Comparator.comparingDouble(BankAccount::getBalance);
 
-        List<BankAccount> result = bank.sortedAccounts(byBalance);
+        List<BankAccount> result = reports.sortedAccounts(byBalance);
 
         assertSame(a1000, result.get(0));
         assertSame(a3000, result.get(1));
@@ -262,15 +167,15 @@ public class BankServiceTest {
         DebitAccount a5000 = new DebitAccount(NUMBER_A, "Ivan", 5000);
         DebitAccount a1000 = new DebitAccount(NUMBER_B, "Petr", 1000);
         DebitAccount a3000 = new DebitAccount(NUMBER_C, "Anna", 3000);
-        bank.openAccount(a5000);
-        bank.openAccount(a1000);
-        bank.openAccount(a3000);
+        accountService.open(a5000);
+        accountService.open(a1000);
+        accountService.open(a3000);
         Comparator<BankAccount> byBalance =
                 Comparator.comparingDouble(BankAccount::getBalance);
         Comparator<BankAccount> byBalanceDesc =
                 byBalance.reversed();
 
-        List<BankAccount> result = bank.sortedAccounts(byBalanceDesc);
+        List<BankAccount> result = reports.sortedAccounts(byBalanceDesc);
 
         assertSame(a5000, result.get(0));
         assertSame(a3000, result.get(1));
@@ -282,13 +187,13 @@ public class BankServiceTest {
         DebitAccount first = new DebitAccount(NUMBER_A, "Ivan", 5000);
         DebitAccount second = new DebitAccount(NUMBER_B, "Petr", 1000);
         DebitAccount third = new DebitAccount(NUMBER_C, "Anna", 3000);
-        bank.openAccount(third);
-        bank.openAccount(first);
-        bank.openAccount(second);
+        accountService.open(third);
+        accountService.open(first);
+        accountService.open(second);
         Comparator<BankAccount> byNumber =
                 Comparator.comparing(a -> a.getId().value());
 
-        List<BankAccount> result = bank.sortedAccounts(byNumber);
+        List<BankAccount> result = reports.sortedAccounts(byNumber);
 
         assertSame(first, result.get(0));
         assertSame(second, result.get(1));
@@ -301,16 +206,16 @@ public class BankServiceTest {
         DebitAccount debit1000 = new DebitAccount(NUMBER_B, "Petr", 1000);
         CreditAccount credit = new CreditAccount(NUMBER_C, "Anna", 3000, 10000);
         SavingsAccount savings = new SavingsAccount(NUMBER_D, "Oleg", 2000, 500);
-        bank.openAccount(debit5000);
-        bank.openAccount(debit1000);
-        bank.openAccount(credit);
-        bank.openAccount(savings);
+        accountService.open(debit5000);
+        accountService.open(debit1000);
+        accountService.open(credit);
+        accountService.open(savings);
         Comparator<BankAccount> byTypeThenBalance =
                 Comparator
                         .comparing((BankAccount a) -> a.getClass().getSimpleName())
                         .thenComparingDouble(BankAccount::getBalance);
 
-        List<BankAccount> result = bank.sortedAccounts(byTypeThenBalance);
+        List<BankAccount> result = reports.sortedAccounts(byTypeThenBalance);
 
         assertSame(credit, result.get(0));
         assertSame(debit1000, result.get(1));
@@ -321,10 +226,10 @@ public class BankServiceTest {
     // ----------этап 2 - filter
     @Test
     void findRichAccountsWithNoMatches() {
-        bank.openAccount(new DebitAccount(NUMBER_A, "Ivan", 1000));
-        bank.openAccount(new DebitAccount(NUMBER_B, "Petr", 2000));
+        accountService.open(new DebitAccount(NUMBER_A, "Ivan", 1000));
+        accountService.open(new DebitAccount(NUMBER_B, "Petr", 2000));
 
-        List<BankAccount> result = bank.findRichAccounts(100_000);
+        List<BankAccount> result = reports.findRichAccounts(100_000);
 
         assertTrue(result.isEmpty());
     }
@@ -332,10 +237,10 @@ public class BankServiceTest {
     @Test
     void findRichAccountsWithOneMatch() {
         DebitAccount rich = new DebitAccount(NUMBER_A, "Ivan", 150000);
-        bank.openAccount(rich);
-        bank.openAccount(new DebitAccount(NUMBER_B, "Petr", 2000));
+        accountService.open(rich);
+        accountService.open(new DebitAccount(NUMBER_B, "Petr", 2000));
 
-        List<BankAccount> result = bank.findRichAccounts(100_000);
+        List<BankAccount> result = reports.findRichAccounts(100_000);
 
         assertEquals(1, result.size());
         assertSame(rich, result.get(0));
@@ -346,11 +251,11 @@ public class BankServiceTest {
         DebitAccount rich1 = new DebitAccount(NUMBER_A, "Ivan", 150000);
         DebitAccount rich2 = new DebitAccount(NUMBER_B, "Petr", 200000);
         DebitAccount poor = new DebitAccount(NUMBER_C, "Anna", 5000);
-        bank.openAccount(rich1);
-        bank.openAccount(rich2);
-        bank.openAccount(poor);
+        accountService.open(rich1);
+        accountService.open(rich2);
+        accountService.open(poor);
 
-        List<BankAccount> result = bank.findRichAccounts(100_000);
+        List<BankAccount> result = reports.findRichAccounts(100_000);
 
         assertEquals(2, result.size());
         assertTrue(result.contains(rich1));
@@ -360,10 +265,10 @@ public class BankServiceTest {
     // ----------этап 3 - map
     @Test
     void getAccountSummariesConvertsTypeAndBalance() {
-        bank.openAccount(new DebitAccount(NUMBER_A, "Ivan", 5000));
-        bank.openAccount(new SavingsAccount(NUMBER_B, "Petr", 150000, 1000));
+        accountService.open(new DebitAccount(NUMBER_A, "Ivan", 5000));
+        accountService.open(new SavingsAccount(NUMBER_B, "Petr", 150000, 1000));
 
-        List<AccountSummary> summaries = bank.getAccountSummaries();
+        List<AccountSummary> summaries = reports.getAccountSummaries();
 
         assertEquals(2, summaries.size());
         assertTrue(summaries.contains(new AccountSummary(NUMBER_A, "DebitAccount", 5000.0)));
@@ -376,11 +281,11 @@ public class BankServiceTest {
         DebitAccount a5000 = new DebitAccount(NUMBER_A, "Ivan", 5000);
         DebitAccount a1000 = new DebitAccount(NUMBER_B, "Petr", 1000);
         DebitAccount a3000 = new DebitAccount(NUMBER_C, "Anna", 3000);
-        bank.openAccount(a5000);
-        bank.openAccount(a1000);
-        bank.openAccount(a3000);
+        accountService.open(a5000);
+        accountService.open(a1000);
+        accountService.open(a3000);
 
-        List<BankAccount> result = bank.richestFirst();
+        List<BankAccount> result = reports.richestFirst();
 
         assertSame(a5000, result.get(0));
         assertSame(a3000, result.get(1));
@@ -389,12 +294,12 @@ public class BankServiceTest {
 
     @Test
     void richestFirstDoesNotChangeRepositoryOrder() {
-        bank.openAccount(new DebitAccount(NUMBER_A, "Ivan", 5000));
-        bank.openAccount(new DebitAccount(NUMBER_B, "Petr", 1000));
-        bank.openAccount(new DebitAccount(NUMBER_C, "Anna", 3000));
+        accountService.open(new DebitAccount(NUMBER_A, "Ivan", 5000));
+        accountService.open(new DebitAccount(NUMBER_B, "Petr", 1000));
+        accountService.open(new DebitAccount(NUMBER_C, "Anna", 3000));
         List<BankAccount> before = repository.findAll();
 
-        bank.richestFirst();
+        reports.richestFirst();
 
         List<BankAccount> after = repository.findAll();
         assertEquals(before, after);
@@ -403,51 +308,51 @@ public class BankServiceTest {
     // ----------этап 5 - short-circuit
     @Test
     void hasBlockedAccountsReturnsTrueIfSomeAccountIsBlocked() {
-        bank.openAccount(new DebitAccount(NUMBER_A, "Ivan", 5000));
-        bank.openAccount(new DebitAccount(NUMBER_B, "Petr", 1000));
+        accountService.open(new DebitAccount(NUMBER_A, "Ivan", 5000));
+        accountService.open(new DebitAccount(NUMBER_B, "Petr", 1000));
         blockedAccounts.block(NUMBER_B);
 
-        assertTrue(bank.hasBlockedAccounts());
+        assertTrue(reports.hasBlockedAccounts());
     }
 
     @Test
     void hasBlockedAccountsReturnsFalseIfNoAccountIsBlocked() {
-        bank.openAccount(new DebitAccount(NUMBER_A, "Ivan", 5000));
-        bank.openAccount(new DebitAccount(NUMBER_B, "Petr", 1000));
+        accountService.open(new DebitAccount(NUMBER_A, "Ivan", 5000));
+        accountService.open(new DebitAccount(NUMBER_B, "Petr", 1000));
 
-        assertFalse(bank.hasBlockedAccounts());
+        assertFalse(reports.hasBlockedAccounts());
     }
 
     @Test
     void allAccountsPositiveReturnsTrueIfAllBalancesArePositive() {
-        bank.openAccount(new DebitAccount(NUMBER_A, "Ivan", 5000));
-        bank.openAccount(new DebitAccount(NUMBER_B, "Petr", 1000));
+        accountService.open(new DebitAccount(NUMBER_A, "Ivan", 5000));
+        accountService.open(new DebitAccount(NUMBER_B, "Petr", 1000));
 
-        assertTrue(bank.allAccountsPositive());
+        assertTrue(reports.allAccountsPositive());
     }
 
     @Test
     void allAccountsPositiveReturnsFalseIfSomeBalanceIsZero() {
-        bank.openAccount(new DebitAccount(NUMBER_A, "Ivan", 5000));
-        bank.openAccount(new DebitAccount(NUMBER_B, "Petr", 0));
+        accountService.open(new DebitAccount(NUMBER_A, "Ivan", 5000));
+        accountService.open(new DebitAccount(NUMBER_B, "Petr", 0));
 
-        assertFalse(bank.allAccountsPositive());
+        assertFalse(reports.allAccountsPositive());
     }
 
     @Test
     void noCreditAccountsReturnsTrueIfThereAreNoCreditAccounts() {
-        bank.openAccount(new DebitAccount(NUMBER_A, "Ivan", 5000));
-        bank.openAccount(new SavingsAccount(NUMBER_B, "Petr", 5000, 1000));
+        accountService.open(new DebitAccount(NUMBER_A, "Ivan", 5000));
+        accountService.open(new SavingsAccount(NUMBER_B, "Petr", 5000, 1000));
 
-        assertTrue(bank.noCreditAccounts());
+        assertTrue(reports.noCreditAccounts());
     }
 
     @Test
     void noCreditAccountsReturnsFalseIfThereIsCreditAccount() {
-        bank.openAccount(new DebitAccount(NUMBER_A, "Ivan", 5000));
-        bank.openAccount(new CreditAccount(NUMBER_B, "Petr", 2000, 10000));
+        accountService.open(new DebitAccount(NUMBER_A, "Ivan", 5000));
+        accountService.open(new CreditAccount(NUMBER_B, "Petr", 2000, 10000));
 
-        assertFalse(bank.noCreditAccounts());
+        assertFalse(reports.noCreditAccounts());
     }
 
     @Test
@@ -474,10 +379,10 @@ public class BankServiceTest {
     @Test
     void findFirstRichAccountReturnsAccountIfExists() {
         DebitAccount rich = new DebitAccount(NUMBER_A, "Ivan", 150000);
-        bank.openAccount(rich);
-        bank.openAccount(new DebitAccount(NUMBER_B, "Petr", 1000));
+        accountService.open(rich);
+        accountService.open(new DebitAccount(NUMBER_B, "Petr", 1000));
 
-        Optional<BankAccount> result = bank.findFirstRichAccount(100_000);
+        Optional<BankAccount> result = reports.findFirstRichAccount(100_000);
 
         assertTrue(result.isPresent());
         assertSame(rich, result.get());
@@ -485,9 +390,9 @@ public class BankServiceTest {
 
     @Test
     void findFirstRichAccountReturnsEmptyIfNotFound() {
-        bank.openAccount(new DebitAccount(NUMBER_A, "Ivan", 1000));
+        accountService.open(new DebitAccount(NUMBER_A, "Ivan", 1000));
 
-        Optional<BankAccount> result = bank.findFirstRichAccount(100_000);
+        Optional<BankAccount> result = reports.findFirstRichAccount(100_000);
 
         assertTrue(result.isEmpty());
     }
@@ -495,31 +400,31 @@ public class BankServiceTest {
     // ----------этап 7 - sum, average, max
     @Test
     void totalBalanceOfEmptyBankIsZero() {
-        assertEquals(0.0, bank.totalBalance());
+        assertEquals(0.0, reports.totalBalance());
     }
 
     @Test
     void totalBalanceSumsAllAccounts() {
-        bank.openAccount(new DebitAccount(NUMBER_A, "Ivan", 1000));
-        bank.openAccount(new DebitAccount(NUMBER_B, "Petr", 2000));
-        bank.openAccount(new DebitAccount(NUMBER_C, "Anna", 3000));
+        accountService.open(new DebitAccount(NUMBER_A, "Ivan", 1000));
+        accountService.open(new DebitAccount(NUMBER_B, "Petr", 2000));
+        accountService.open(new DebitAccount(NUMBER_C, "Anna", 3000));
 
-        assertEquals(6000.0, bank.totalBalance());
+        assertEquals(6000.0, reports.totalBalance());
     }
 
     @Test
     void averageBalanceOfEmptyBankIsEmpty() {
-        assertEquals(OptionalDouble.empty(), bank.averageBalance());
+        assertEquals(OptionalDouble.empty(), reports.averageBalance());
     }
 
     @Test
     void richestAccountReturnsAccountWithMaxBalance() {
         DebitAccount richest = new DebitAccount(NUMBER_B, "Petr", 9000);
-        bank.openAccount(new DebitAccount(NUMBER_A, "Ivan", 1000));
-        bank.openAccount(richest);
-        bank.openAccount(new DebitAccount(NUMBER_C, "Anna", 3000));
+        accountService.open(new DebitAccount(NUMBER_A, "Ivan", 1000));
+        accountService.open(richest);
+        accountService.open(new DebitAccount(NUMBER_C, "Anna", 3000));
 
-        Optional<BankAccount> result = bank.richestAccount();
+        Optional<BankAccount> result = reports.richestAccount();
 
         assertTrue(result.isPresent());
         assertSame(richest, result.get());
@@ -527,6 +432,72 @@ public class BankServiceTest {
 
     @Test
     void richestAccountOfEmptyBankIsEmpty() {
-        assertTrue(bank.richestAccount().isEmpty());
+        assertTrue(reports.richestAccount().isEmpty());
+    }
+
+    // ----------этап 5 - статистика на Map
+    @Test
+    void emptyJournalGivesEmptyStatistics() {
+        Map<AccountNumber, Integer> counts = reports.countByAccount(journal.findAll());
+        Map<AccountNumber, Double> totals = reports.totalAmountByAccount(journal.findAll());
+
+        assertTrue(counts.isEmpty());
+        assertTrue(totals.isEmpty());
+    }
+
+    @Test
+    void oneAccountIsCountedAndSummed() {
+        journal.add(transaction(1L, NUMBER_A, 1000));
+
+        Map<AccountNumber, Integer> counts = reports.countByAccount(journal.findAll());
+        Map<AccountNumber, Double> totals = reports.totalAmountByAccount(journal.findAll());
+
+        assertEquals(1, counts.size());
+        assertEquals(1, counts.get(NUMBER_A));
+        assertEquals(1000.0, totals.get(NUMBER_A));
+    }
+
+    @Test
+    void severalAccountsAreCountedSeparately() {
+        journal.add(transaction(1L, NUMBER_A, 1000));
+        journal.add(transaction(2L, NUMBER_B, 500));
+
+        Map<AccountNumber, Integer> counts = reports.countByAccount(journal.findAll());
+        Map<AccountNumber, Double> totals = reports.totalAmountByAccount(journal.findAll());
+
+        assertEquals(2, counts.size());
+        assertEquals(1, counts.get(NUMBER_A));
+        assertEquals(1, counts.get(NUMBER_B));
+        assertEquals(1000.0, totals.get(NUMBER_A));
+        assertEquals(500.0, totals.get(NUMBER_B));
+    }
+
+    @Test
+    void severalTransactionsOfOneAccountAreAddedUp() {
+        journal.add(transaction(1L, NUMBER_A, 1000));
+        journal.add(transaction(2L, NUMBER_A, 500));
+        journal.add(transaction(3L, NUMBER_A, 250));
+
+        Map<AccountNumber, Integer> counts = reports.countByAccount(journal.findAll());
+        Map<AccountNumber, Double> totals = reports.totalAmountByAccount(journal.findAll());
+
+        assertEquals(1, counts.size());
+        assertEquals(3, counts.get(NUMBER_A));
+        assertEquals(1750.0, totals.get(NUMBER_A));
+    }
+
+    @Test
+    void equalAccountNumbersAreOneEntry() {
+        AccountNumber first = new AccountNumber("1111111111");
+        AccountNumber second = new AccountNumber("1111111111");
+        journal.add(transaction(1L, first, 1000));
+        journal.add(transaction(2L, second, 500));
+
+        Map<AccountNumber, Integer> counts = reports.countByAccount(journal.findAll());
+        Map<AccountNumber, Double> totals = reports.totalAmountByAccount(journal.findAll());
+
+        assertEquals(1, counts.size());
+        assertEquals(2, counts.get(first));
+        assertEquals(1500.0, totals.get(second));
     }
 }

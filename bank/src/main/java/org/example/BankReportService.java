@@ -2,58 +2,22 @@ package org.example;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.function.Predicate;
 
-public class BankService {
+public class BankReportService {
     private final Repository<AccountNumber, BankAccount> accounts;
-    private final TransferService transferService;
     private final BlockedAccountRegistry blockedAccounts;
 
-    public BankService(
+    public BankReportService(
             Repository<AccountNumber, BankAccount> accounts,
-            TransferService transferService,
             BlockedAccountRegistry blockedAccounts) {
         this.accounts = accounts;
-        this.transferService = transferService;
         this.blockedAccounts = blockedAccounts;
-    }
-
-    public void openAccount(BankAccount account) {
-        if (account == null) {
-            throw new IllegalArgumentException("Account must not be null");
-        }
-        accounts.save(account);
-    }
-
-    // если счета нет, вернется null, так же как в Repository
-    public BankAccount findAccount(AccountNumber number) {
-        return accounts.findById(number);
-    }
-
-    public boolean closeAccount(AccountNumber number) {
-        return accounts.deleteById(number);
-    }
-
-    // ----------этап 2 - перевод по номерам счетов
-    public void transfer(
-            AccountNumber fromNumber,
-            AccountNumber toNumber,
-            double amount) {
-        BankAccount from = accounts.findById(fromNumber);
-        BankAccount to = accounts.findById(toNumber);
-
-        // findById возвращает null, если счета нет, поэтому проверяем оба
-        if (from == null) {
-            throw new IllegalArgumentException("Source account not found");
-        }
-        if (to == null) {
-            throw new IllegalArgumentException("Target account not found");
-        }
-
-        transferService.transfer(from, to, amount);
     }
 
     // ----------этап 3 - поиск счетов по условию
@@ -174,5 +138,30 @@ public class BankService {
     public Optional<BankAccount> richestAccount() {
         return accounts.findAll().stream()
                 .max(Comparator.comparingDouble(BankAccount::getBalance));
+    }
+
+
+    // ----------этап 5 - количество исходящих операций по счетам
+    public Map<AccountNumber, Integer> countByAccount(
+            List<Transaction> transactions) {
+        Map<AccountNumber, Integer> result = new HashMap<>();
+        for (Transaction tx : transactions) {
+            AccountNumber number = tx.account();
+            int old = result.getOrDefault(number, 0);
+            result.put(number, old + 1);
+        }
+        return result;
+    }
+
+    // общая сумма операций по счетам
+    public Map<AccountNumber, Double> totalAmountByAccount(
+            List<Transaction> transactions) {
+        Map<AccountNumber, Double> result = new HashMap<>();
+        for (Transaction tx : transactions) {
+            AccountNumber number = tx.account();
+            double old = result.getOrDefault(number, 0.0);
+            result.put(number, old + tx.amount());
+        }
+        return result;
     }
 }
