@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+// адаптер: реализует порт AccountRepository и хранит счета в памяти
 public class InMemoryAccountRepository
         implements AccountRepository {
 
