@@ -47,7 +47,11 @@ public class Main {
         System.out.println("---------------------------------------------------");
 
         // ----------этап 14 - переводы и исключения
-        TransferService transferService = new TransferService(new PercentCommission(1), new ConsoleNotificationAdapter(), new BlockedAccountRegistry(), new TransactionJournal());
+        NotificationService notification =
+                new LoggingNotificationDecorator(
+                        new ConsoleNotificationAdapter()
+                );
+        TransferService transferService = new TransferService(new PercentCommission(1), notification, new BlockedAccountRegistry(), new TransactionJournal());
 
         // успешный перевод
         try {
