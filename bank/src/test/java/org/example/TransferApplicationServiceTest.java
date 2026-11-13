@@ -9,7 +9,7 @@ public class TransferApplicationServiceTest {
     private static final AccountNumber NUMBER_B = new AccountNumber("2222222222");
 
     private final BlockedAccountRegistry blockedAccounts = new BlockedAccountRegistry();
-    private final Repository<AccountNumber, BankAccount> repository = new InMemoryRepository<>();
+    private final AccountRepository repository = new InMemoryAccountRepository();
     private final AccountService accountService = new AccountService(repository);
 
     // сервису переводов не нужны отчеты: ему нужны только счета и TransferService

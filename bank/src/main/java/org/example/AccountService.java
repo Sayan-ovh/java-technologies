@@ -3,9 +3,9 @@ package org.example;
 import java.util.Optional;
 
 public class AccountService {
-    private final Repository<AccountNumber, BankAccount> accounts;
+    private final AccountRepository accounts;
 
-    public AccountService(Repository<AccountNumber, BankAccount> accounts) {
+    public AccountService(AccountRepository accounts) {
         this.accounts = accounts;
     }
 
@@ -16,9 +16,8 @@ public class AccountService {
         accounts.save(account);
     }
 
-    // в Repository для отсутствующего счета возвращается null, поэтому заворачиваем в Optional
     public Optional<BankAccount> find(AccountNumber number) {
-        return Optional.ofNullable(accounts.findById(number));
+        return accounts.findById(number);
     }
 
     public boolean close(AccountNumber number) {

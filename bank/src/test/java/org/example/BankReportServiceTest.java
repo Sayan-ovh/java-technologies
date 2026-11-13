@@ -20,7 +20,7 @@ public class BankReportServiceTest {
     private static final AccountNumber NUMBER_D = new AccountNumber("4444444444");
 
     private final BlockedAccountRegistry blockedAccounts = new BlockedAccountRegistry();
-    private final Repository<AccountNumber, BankAccount> repository = new InMemoryRepository<>();
+    private final AccountRepository repository = new InMemoryAccountRepository();
     private final AccountService accountService = new AccountService(repository);
     private final BankReportService reports = new BankReportService(repository, blockedAccounts);
     private final TransactionJournal journal = new TransactionJournal();

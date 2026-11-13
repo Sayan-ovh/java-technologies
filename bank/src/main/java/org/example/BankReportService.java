@@ -10,11 +10,11 @@ import java.util.OptionalDouble;
 import java.util.function.Predicate;
 
 public class BankReportService {
-    private final Repository<AccountNumber, BankAccount> accounts;
+    private final AccountRepository accounts;
     private final BlockedAccountRegistry blockedAccounts;
 
     public BankReportService(
-            Repository<AccountNumber, BankAccount> accounts,
+            AccountRepository accounts,
             BlockedAccountRegistry blockedAccounts) {
         this.accounts = accounts;
         this.blockedAccounts = blockedAccounts;

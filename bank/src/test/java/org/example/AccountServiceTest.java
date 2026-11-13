@@ -8,7 +8,7 @@ public class AccountServiceTest {
     private static final AccountNumber NUMBER_A = new AccountNumber("1111111111");
 
     // сервис счетов создается только с репозиторием, TransferService ему не нужен
-    private final AccountService accountService = new AccountService(new InMemoryRepository<>());
+    private final AccountService accountService = new AccountService(new InMemoryAccountRepository());
 
     // ----------этап 2 - AccountService работает без TransferService
     @Test

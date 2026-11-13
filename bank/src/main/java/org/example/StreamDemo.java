@@ -28,7 +28,7 @@ public class StreamDemo {
 
         // ----------этап 6 - findFirst и Optional
         BlockedAccountRegistry blockedAccounts = new BlockedAccountRegistry();
-        Repository<AccountNumber, BankAccount> repository = new InMemoryRepository<>();
+        AccountRepository repository = new InMemoryAccountRepository();
         AccountService accountService = new AccountService(repository);
         BankReportService reports = new BankReportService(repository, blockedAccounts);
         for (BankAccount opened : accounts) {
