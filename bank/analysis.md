@@ -6,3 +6,9 @@ bankservice в задании делает всё сразу: счета, пер
 - bankservice: и счета, и переводы, и отчёты в одном классе. надо делить
 - transferservice: лимит 50000 написан прямо в коде
 - остальные классы маленькие, там всё нормально
+
+этап 10. isp и lsp
+
+isp: интерфейсы у нас маленькие, у большинства по одному методу. толстого интерфейса как megarepository нет, делить нечего.
+
+lsp: любой debitaccount, savingsaccount и creditaccount можно ставить туда, где ждут bankaccount. withdraw написан один раз в bankaccount, подклассы меняют только то, сколько можно снять. unsupportedoperationexception нигде нет, instanceof перед withdraw тоже нет. всё нормально.
