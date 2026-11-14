@@ -1,5 +1,13 @@
 package org.example;
 
+import org.example.application.AccountSummary;
+import org.example.application.CollectionFunctions;
+import org.example.domain.AccountNumber;
+import org.example.domain.BankAccount;
+import org.example.domain.CreditAccount;
+import org.example.domain.DebitAccount;
+import org.example.domain.SavingsAccount;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;

@@ -1,5 +1,9 @@
 package org.example;
 
+import org.example.domain.AccountNumber;
+import org.example.domain.BankAccount;
+import org.example.domain.DebitAccount;
+
 import java.util.Comparator;
 import java.util.List;
 

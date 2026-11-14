@@ -1,5 +1,9 @@
 package org.example;
 
+import org.example.domain.AccountNumber;
+import org.example.domain.BankAccount;
+import org.example.domain.DebitAccount;
+
 import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
@@ -9,6 +13,63 @@ public class GenericUtilsTest {
 
     private final DebitAccount first = new DebitAccount(new AccountNumber("1111111111"), "Ivan", 1000);
     private final DebitAccount second = new DebitAccount(new AccountNumber("2222222222"), "Petr", 2000);
+
+    // ----------first, last, contains
+    @Test
+    void firstReturnsFirstElement() {
+        String[] names = {"Ivan", "Petr", "Olga"};
+
+        assertEquals("Ivan", GenericUtils.first(names));
+    }
+
+    @Test
+    void lastReturnsLastElement() {
+        Integer[] numbers = {1, 2, 3};
+
+        assertEquals(3, GenericUtils.last(numbers));
+    }
+
+    @Test
+    void firstThrowsExceptionForEmptyArray() {
+        String[] empty = {};
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> GenericUtils.first(empty)
+        );
+    }
+
+    @Test
+    void lastThrowsExceptionForEmptyArray() {
+        String[] empty = {};
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> GenericUtils.last(empty)
+        );
+    }
+
+    @Test
+    void containsFindsExistingElement() {
+        String[] names = {"Ivan", "Petr", "Olga"};
+
+        assertTrue(GenericUtils.contains(names, "Petr"));
+    }
+
+    @Test
+    void containsReturnsFalseForMissingElement() {
+        Integer[] numbers = {1, 2, 3};
+
+        assertFalse(GenericUtils.contains(numbers, 10));
+    }
+
+    @Test
+    void containsComparesWithEquals() {
+        String[] values = {"Java"};
+
+        // это другой объект, но равный по equals
+        assertTrue(GenericUtils.contains(values, new String("Java")));
+    }
 
     // ----------этап 6 - copy
     @Test

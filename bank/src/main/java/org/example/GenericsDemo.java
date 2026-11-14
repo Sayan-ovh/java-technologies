@@ -1,5 +1,15 @@
 package org.example;
 
+import org.example.adapters.InMemoryRepository;
+import org.example.domain.AccountNumber;
+import org.example.domain.BankAccount;
+import org.example.domain.DebitAccount;
+import org.example.domain.SavingsAccount;
+import org.example.domain.Transaction;
+import org.example.domain.TransactionStatus;
+import org.example.domain.TransactionType;
+import org.example.ports.Repository;
+
 import java.util.ArrayList;
 import java.util.List;
 

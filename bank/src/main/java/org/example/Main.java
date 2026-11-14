@@ -1,5 +1,22 @@
 package org.example;
 
+import org.example.adapters.ConsoleNotificationAdapter;
+import org.example.adapters.LoggingNotificationDecorator;
+import org.example.application.TransferService;
+import org.example.domain.AccountNumber;
+import org.example.domain.BlockedAccountRegistry;
+import org.example.domain.CreditAccount;
+import org.example.domain.DebitAccount;
+import org.example.domain.InsufficientFundsException;
+import org.example.domain.PercentCommission;
+import org.example.domain.SavingsAccount;
+import org.example.domain.Transaction;
+import org.example.domain.TransactionJournal;
+import org.example.domain.TransactionStatus;
+import org.example.domain.TransactionType;
+import org.example.domain.TransferLimitExceededException;
+import org.example.ports.NotificationService;
+
 public class Main {
     public static void main(String[] args) {
         // ----------этап 1 - toString

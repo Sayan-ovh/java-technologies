@@ -1,5 +1,16 @@
 package org.example;
 
+import org.example.adapters.InMemoryAccountRepository;
+import org.example.application.AccountService;
+import org.example.application.BankReportService;
+import org.example.domain.AccountNumber;
+import org.example.domain.BankAccount;
+import org.example.domain.BlockedAccountRegistry;
+import org.example.domain.CreditAccount;
+import org.example.domain.DebitAccount;
+import org.example.domain.SavingsAccount;
+import org.example.ports.AccountRepository;
+
 import java.util.ArrayList;
 import java.util.List;
 
