@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class TransactionFileImporter {
 
@@ -34,6 +35,18 @@ public class TransactionFileImporter {
             return new TransactionDto(id, parts[1], parts[2], amount, status.name());
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Bad line " + lineNumber + ": " + line);
+        }
+    }
+
+    // ----------этап 4 - подсчет успешных операций построчно, без readAllLines()
+    public long countSuccessful(Path path)
+            throws IOException {
+        try (Stream<String> lines =
+                     Files.lines(path)) {
+            return lines
+                    .filter(line ->
+                            line.contains("SUCCESS"))
+                    .count();
         }
     }
 }
