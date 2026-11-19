@@ -1,5 +1,6 @@
 package org.example.adapters;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
@@ -19,5 +20,13 @@ public class JsonStorage {
                         path.toFile(),
                         accounts
                 );
+    }
+
+    public List<AccountDto> loadAccounts(
+            Path path) throws IOException {
+        return mapper.readValue(
+                path.toFile(),
+                new TypeReference<List<AccountDto>>() {}
+        );
     }
 }
