@@ -1,5 +1,7 @@
 package org.example.adapters;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -9,6 +11,8 @@ import java.net.http.HttpResponse;
 public class ExternalRatesClient {
     private final HttpClient client =
             HttpClient.newHttpClient();
+    private final ObjectMapper mapper =
+            new ObjectMapper();
 
     public String get(String url)
             throws IOException,
@@ -31,5 +35,18 @@ public class ExternalRatesClient {
             );
         }
         return response.body();
+    }
+
+    // ----------этап 9 - ответ http превращаем в json, а json в dto
+    public RateDto getRate(String url)
+            throws IOException,
+            InterruptedException {
+        String body = get(url);
+        RateDto rate =
+                mapper.readValue(
+                        body,
+                        RateDto.class
+                );
+        return rate;
     }
 }
