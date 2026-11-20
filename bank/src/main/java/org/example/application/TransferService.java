@@ -1,5 +1,6 @@
 package org.example.application;
 
+import org.example.domain.Audited;
 import org.example.domain.BankAccount;
 import org.example.domain.BlockedAccountRegistry;
 import org.example.domain.CommissionPolicy;
@@ -10,6 +11,7 @@ import org.example.domain.TransactionType;
 import org.example.domain.TransferLimitExceededException;
 import org.example.ports.NotificationService;
 
+@Audited
 public class TransferService {
     private static final double TRANSFER_LIMIT = 50_000;
 

@@ -2,6 +2,7 @@ package org.example.application;
 
 import org.example.domain.AccountNumber;
 import org.example.domain.BankAccount;
+import org.example.domain.RequiresRole;
 import org.example.ports.AccountRepository;
 
 import java.util.Optional;
@@ -24,6 +25,7 @@ public class AccountService {
         return accounts.findById(number);
     }
 
+    @RequiresRole("ADMIN")
     public boolean close(AccountNumber number) {
         return accounts.deleteById(number);
     }
