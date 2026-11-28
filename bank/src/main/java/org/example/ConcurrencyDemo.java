@@ -15,7 +15,14 @@ import java.util.List;
 
 public class ConcurrencyDemo {
     public static void main(String[] args) throws InterruptedException {
-        // ----------этап 1 - 5 счетов по 100 000, общая сумма 500 000
+        // ----------этап 2 - несколько запусков без синхронизации для проверки инварианта
+        int runsCount = 5;
+        for (int run = 1; run <= runsCount; run++) {
+            runSimulation(run);
+        }
+    }
+
+    private static void runSimulation(int runNumber) throws InterruptedException {
         List<BankAccount> accounts = List.of(
                 new DebitAccount(new AccountNumber("1111111111"), "Ivan", 100_000),
                 new DebitAccount(new AccountNumber("2222222222"), "Petr", 100_000),
@@ -25,9 +32,7 @@ public class ConcurrencyDemo {
         );
 
         double initialTotal = totalBalance(accounts);
-        System.out.println("Initial total: " + initialTotal);
 
-        // уведомления пустые
         NotificationService silentNotification = message -> {};
         TransferService transferService = new TransferService(
                 new NoCommission(),
@@ -55,28 +60,27 @@ public class ConcurrencyDemo {
             thread.start();
         }
 
-        // ждем завершения всех клиентских потоков
         for (Thread thread : threads) {
             thread.join();
         }
 
-        System.out.println("---------------------------------------------------");
-        for (BankAccount account : accounts) {
-            System.out.println(account);
+        double finalTotal = totalBalance(accounts);
+        boolean invariantKept = initialTotal == finalTotal;
+
+        int totalSuccess = 0;
+        int totalFailed = 0;
+        for (BankClient client : clients) {
+            totalSuccess += client.getSuccessCount();
+            totalFailed += client.getFailedCount();
         }
 
-        double finalTotal = totalBalance(accounts);
+        System.out.println("---------------------------------------------------");
+        System.out.println("Run " + runNumber);
+        System.out.println("Initial total: " + initialTotal);
         System.out.println("Final total: " + finalTotal);
         System.out.println("Difference: " + (finalTotal - initialTotal));
-
-        System.out.println("---------------------------------------------------");
-        for (BankClient client : clients) {
-            System.out.println(
-                    client.getName()
-                            + " -> success: " + client.getSuccessCount()
-                            + ", failed: " + client.getFailedCount()
-            );
-        }
+        System.out.println("Invariant kept: " + invariantKept);
+        System.out.println("Success: " + totalSuccess + ", failed: " + totalFailed);
     }
 
     private static double totalBalance(List<BankAccount> accounts) {
